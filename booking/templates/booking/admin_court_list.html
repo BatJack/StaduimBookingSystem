@@ -1,0 +1,40 @@
+{% extends 'booking/base.html' %}
+
+{% block title %}场地管理 - 羽毛球场地预约系统{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <h2>场地管理</h2>
+        <a href="{% url 'admin_court_add' %}" class="btn btn-success">添加场地</a>
+        <br><br>
+        {% if courts %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>场地名称</th>
+                        <th>描述</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for court in courts %}
+                        <tr>
+                            <td>{{ court.id }}</td>
+                            <td>{{ court.name }}</td>
+                            <td>{{ court.description|default:"暂无描述" }}</td>
+                            <td>{{ court.created_at|date:"Y-m-d H:i" }}</td>
+                            <td>
+                                <a href="{% url 'admin_court_edit' court.id %}" class="btn">编辑</a>
+                                <a href="{% url 'admin_court_delete' court.id %}" class="btn btn-danger" onclick="return confirm('确定要删除这个场地吗？')">删除</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>暂无场地。</p>
+        {% endif %}
+    </div>
+{% endblock %}

@@ -1,0 +1,380 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
+from django.contrib import messages
+from django.utils import timezone
+from datetime import datetime, timedelta, time
+from .models import Court, CourtAvailability, Booking
+
+
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user:
+            login(request, user)
+            return redirect('court_list')
+        else:
+            messages.error(request, '用户名或密码错误')
+    return render(request, 'booking/login.html')
+
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')
+
+
+@login_required
+def court_list(request):
+    courts = Court.objects.all()
+    return render(request, 'booking/court_list.html', {'courts': courts})
+
+
+@login_required
+def booking_form(request, court_id):
+    court = get_object_or_404(Court, id=court_id)
+    today = timezone.now().date()
+    
+    if request.method == 'POST':
+        date_str = request.POST.get('date')
+        start_time_str = request.POST.get('start_time')
+        end_time_str = request.POST.get('end_time')
+        
+        try:
+            booking_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            start_time = datetime.strptime(start_time_str, '%H:%M').time()
+            end_time = datetime.strptime(end_time_str, '%H:%M').time()
+            
+            if start_time >= end_time:
+                messages.error(request, '结束时间必须大于开始时间')
+                return render(request, 'booking/booking_form.html', {
+                    'court': court,
+                    'today': today,
+                })
+            
+            if start_time.minute not in [0, 30] or end_time.minute not in [0, 30]:
+                messages.error(request, '时间必须是整点或半点')
+                return render(request, 'booking/booking_form.html', {
+                    'court': court,
+                    'today': today,
+                })
+            
+            availability = CourtAvailability.objects.filter(
+                court=court,
+                date=booking_date
+            ).first()
+            
+            if not availability:
+                messages.error(request, '该日期场地未开放')
+                return render(request, 'booking/booking_form.html', {
+                    'court': court,
+                    'today': today,
+                })
+            
+            if start_time < availability.start_time or end_time > availability.end_time:
+                messages.error(request, '预约时间不在场地开放时间内')
+                return render(request, 'booking/booking_form.html', {
+                    'court': court,
+                    'today': today,
+                })
+            
+            conflicting_bookings = Booking.objects.filter(
+                court=court,
+                date=booking_date,
+                status='active'
+            ).exclude(
+                end_time__lte=start_time
+            ).exclude(
+                start_time__gte=end_time
+            )
+            
+            if conflicting_bookings.exists():
+                messages.error(request, '该时间段已被预约')
+                return render(request, 'booking/booking_form.html', {
+                    'court': court,
+                    'today': today,
+                })
+            
+            Booking.objects.create(
+                user=request.user,
+                court=court,
+                date=booking_date,
+                start_time=start_time,
+                end_time=end_time,
+                status='active'
+            )
+            
+            messages.success(request, '预约成功')
+            return redirect('my_bookings')
+            
+        except ValueError:
+            messages.error(request, '时间格式错误')
+    
+    return render(request, 'booking/booking_form.html', {
+        'court': court,
+        'today': today,
+    })
+
+
+@login_required
+def my_bookings(request):
+    bookings = Booking.objects.filter(
+        user=request.user,
+        status='active'
+    ).order_by('date', 'start_time')
+    return render(request, 'booking/my_bookings.html', {'bookings': bookings})
+
+
+@login_required
+def cancel_booking(request, booking_id):
+    booking = get_object_or_404(Booking, id=booking_id)
+    
+    if booking.user != request.user and not request.user.is_staff:
+        messages.error(request, '您没有权限取消此预约')
+        return redirect('my_bookings')
+    
+    booking.status = 'cancelled'
+    booking.save()
+    messages.success(request, '预约已取消')
+    
+    if request.user.is_staff:
+        return redirect('admin_bookings')
+    return redirect('my_bookings')
+
+
+@login_required
+def admin_dashboard(request):
+    if not request.user.is_staff:
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    return render(request, 'booking/admin_dashboard.html')
+
+
+@login_required
+def admin_court_list(request):
+    if not request.user.is_staff:
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    courts = Court.objects.all()
+    return render(request, 'booking/admin_court_list.html', {'courts': courts})
+
+
+@login_required
+def admin_court_add(request):
+    if not request.user.is_staff:
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        description = request.POST.get('description')
+        
+        Court.objects.create(name=name, description=description)
+        messages.success(request, '场地添加成功')
+        return redirect('admin_court_list')
+    
+    return render(request, 'booking/admin_court_form.html')
+
+
+@login_required
+def admin_court_edit(request, court_id):
+    if not request.user.is_staff:
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    court = get_object_or_404(Court, id=court_id)
+    
+    if request.method == 'POST':
+        court.name = request.POST.get('name')
+        court.description = request.POST.get('description')
+        court.save()
+        messages.success(request, '场地更新成功')
+        return redirect('admin_court_list')
+    
+    return render(request, 'booking/admin_court_form.html', {'court': court})
+
+
+@login_required
+def admin_court_delete(request, court_id):
+    if not request.user.is_staff:
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    court = get_object_or_404(Court, id=court_id)
+    court.delete()
+    messages.success(request, '场地删除成功')
+    return redirect('admin_court_list')
+
+
+@login_required
+def admin_availability_list(request):
+    if not request.user.is_staff:
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    courts = Court.objects.all()
+    today = timezone.now().date()
+    
+    availabilities = CourtAvailability.objects.filter(
+        date__gte=today
+    ).select_related('court').order_by('date', 'start_time')
+    
+    return render(request, 'booking/admin_availability_list.html', {
+        'availabilities': availabilities,
+        'courts': courts,
+    })
+
+
+@login_required
+def admin_availability_add(request):
+    if not request.user.is_staff:
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    if request.method == 'POST':
+        court_id = request.POST.get('court')
+        date_str = request.POST.get('date')
+        start_time_str = request.POST.get('start_time')
+        end_time_str = request.POST.get('end_time')
+        
+        try:
+            court = Court.objects.get(id=court_id)
+            date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            start_time = datetime.strptime(start_time_str, '%H:%M').time()
+            end_time = datetime.strptime(end_time_str, '%H:%M').time()
+            
+            if start_time >= end_time:
+                messages.error(request, '结束时间必须大于开始时间')
+                return render(request, 'booking/admin_availability_form.html', {
+                    'courts': Court.objects.all(),
+                })
+            
+            CourtAvailability.objects.update_or_create(
+                court=court,
+                date=date,
+                defaults={
+                    'start_time': start_time,
+                    'end_time': end_time
+                }
+            )
+            
+            messages.success(request, '可用时间段设置成功')
+            return redirect('admin_availability_list')
+            
+        except ValueError:
+            messages.error(request, '时间格式错误')
+        except Court.DoesNotExist:
+            messages.error(request, '场地不存在')
+    
+    return render(request, 'booking/admin_availability_form.html', {
+        'courts': Court.objects.all(),
+    })
+
+
+@login_required
+def admin_bookings(request):
+    if not request.user.is_staff:
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    bookings = Booking.objects.all().select_related('user', 'court').order_by('date', 'start_time')
+    return render(request, 'booking/admin_bookings.html', {'bookings': bookings})
+
+
+@login_required
+def admin_booking_add(request):
+    if not request.user.is_staff:
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        court_id = request.POST.get('court')
+        date_str = request.POST.get('date')
+        start_time_str = request.POST.get('start_time')
+        end_time_str = request.POST.get('end_time')
+        
+        try:
+            user = User.objects.get(username=username)
+            court = Court.objects.get(id=court_id)
+            booking_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            start_time = datetime.strptime(start_time_str, '%H:%M').time()
+            end_time = datetime.strptime(end_time_str, '%H:%M').time()
+            
+            if start_time >= end_time:
+                messages.error(request, '结束时间必须大于开始时间')
+                return render(request, 'booking/admin_booking_form.html', {
+                    'courts': Court.objects.all(),
+                    'users': User.objects.all(),
+                })
+            
+            if start_time.minute not in [0, 30] or end_time.minute not in [0, 30]:
+                messages.error(request, '时间必须是整点或半点')
+                return render(request, 'booking/admin_booking_form.html', {
+                    'courts': Court.objects.all(),
+                    'users': User.objects.all(),
+                })
+            
+            availability = CourtAvailability.objects.filter(
+                court=court,
+                date=booking_date
+            ).first()
+            
+            if not availability:
+                messages.error(request, '该日期场地未开放')
+                return render(request, 'booking/admin_booking_form.html', {
+                    'courts': Court.objects.all(),
+                    'users': User.objects.all(),
+                })
+            
+            if start_time < availability.start_time or end_time > availability.end_time:
+                messages.error(request, '预约时间不在场地开放时间内')
+                return render(request, 'booking/admin_booking_form.html', {
+                    'courts': Court.objects.all(),
+                    'users': User.objects.all(),
+                })
+            
+            conflicting_bookings = Booking.objects.filter(
+                court=court,
+                date=booking_date,
+                status='active'
+            ).exclude(
+                end_time__lte=start_time
+            ).exclude(
+                start_time__gte=end_time
+            )
+            
+            if conflicting_bookings.exists():
+                messages.error(request, '该时间段已被预约')
+                return render(request, 'booking/admin_booking_form.html', {
+                    'courts': Court.objects.all(),
+                    'users': User.objects.all(),
+                })
+            
+            Booking.objects.create(
+                user=user,
+                court=court,
+                date=booking_date,
+                start_time=start_time,
+                end_time=end_time,
+                status='active'
+            )
+            
+            messages.success(request, '预约添加成功')
+            return redirect('admin_bookings')
+            
+        except User.DoesNotExist:
+            messages.error(request, '用户不存在')
+        except Court.DoesNotExist:
+            messages.error(request, '场地不存在')
+        except ValueError:
+            messages.error(request, '时间格式错误')
+    
+    return render(request, 'booking/admin_booking_form.html', {
+        'courts': Court.objects.all(),
+        'users': User.objects.all(),
+    })

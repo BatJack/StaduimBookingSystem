@@ -1,0 +1,39 @@
+{% extends 'booking/base.html' %}
+
+{% block title %}我的预约 - 羽毛球场地预约系统{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <h2>我的预约</h2>
+        {% if bookings %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>场地</th>
+                        <th>日期</th>
+                        <th>开始时间</th>
+                        <th>结束时间</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                        <tr>
+                            <td>{{ booking.court.name }}</td>
+                            <td>{{ booking.date|date:"Y-m-d" }}</td>
+                            <td>{{ booking.start_time|time:"H:i" }}</td>
+                            <td>{{ booking.end_time|time:"H:i" }}</td>
+                            <td>{{ booking.get_status_display }}</td>
+                            <td>
+                                <a href="{% url 'cancel_booking' booking.id %}" class="btn btn-danger" onclick="return confirm('确定要取消这个预约吗？')">取消</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>您还没有任何预约。</p>
+        {% endif %}
+    </div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends 'booking/base.html' %}
+
+{% block title %}{% if court %}编辑场地{% else %}添加场地{% endif %} - 羽毛球场地预约系统{% endblock %}
+
+{% block content %}
+    <div class="card" style="max-width: 600px; margin: 0 auto;">
+        <h2>{% if court %}编辑场地{% else %}添加场地{% endif %}</h2>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="name">场地名称</label>
+                <input type="text" id="name" name="name" value="{% if court %}{{ court.name }}{% endif %}" required>
+            </div>
+            <div class="form-group">
+                <label for="description">场地描述</label>
+                <textarea id="description" name="description" rows="4">{% if court %}{{ court.description }}{% endif %}</textarea>
+            </div>
+            <button type="submit" class="btn">{% if court %}更新{% else %}添加{% endif %}</button>
+            <a href="{% url 'admin_court_list' %}" class="btn btn-danger">取消</a>
+        </form>
+    </div>
+{% endblock %}

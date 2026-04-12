@@ -1,0 +1,29 @@
+{% extends 'booking/base.html' %}
+
+{% block title %}管理后台 - 羽毛球场地预约系统{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <h2>管理后台</h2>
+        <div class="grid">
+            <div class="card">
+                <h3>场地管理</h3>
+                <p>添加、编辑和删除场地</p>
+                <br>
+                <a href="{% url 'admin_court_list' %}" class="btn">管理场地</a>
+            </div>
+            <div class="card">
+                <h3>可用时间段管理</h3>
+                <p>设置场地每天的开放时间</p>
+                <br>
+                <a href="{% url 'admin_availability_list' %}" class="btn">管理时间段</a>
+            </div>
+            <div class="card">
+                <h3>预约管理</h3>
+                <p>查看和管理所有预约</p>
+                <br>
+                <a href="{% url 'admin_bookings' %}" class="btn">管理预约</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

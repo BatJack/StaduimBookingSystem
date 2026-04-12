@@ -1,0 +1,28 @@
+{% extends 'booking/base.html' %}
+
+{% block title %}预约场地 - {{ court.name }} - 羽毛球场地预约系统{% endblock %}
+
+{% block content %}
+    <div class="card" style="max-width: 600px; margin: 0 auto;">
+        <h2>预约 {{ court.name }}</h2>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="date">预约日期</label>
+                <input type="date" id="date" name="date" min="{{ today|date:'Y-m-d' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="start_time">开始时间</label>
+                <input type="time" id="start_time" name="start_time" step="1800" required>
+                <small>时间必须是整点或半点</small>
+            </div>
+            <div class="form-group">
+                <label for="end_time">结束时间</label>
+                <input type="time" id="end_time" name="end_time" step="1800" required>
+                <small>时间必须是整点或半点</small>
+            </div>
+            <button type="submit" class="btn">提交预约</button>
+            <a href="{% url 'court_list' %}" class="btn btn-danger">取消</a>
+        </form>
+    </div>
+{% endblock %}

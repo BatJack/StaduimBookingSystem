@@ -1,0 +1,37 @@
+{% extends 'booking/base.html' %}
+
+{% block title %}可用时间段管理 - 羽毛球场地预约系统{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <h2>可用时间段管理</h2>
+        <a href="{% url 'admin_availability_add' %}" class="btn btn-success">设置时间段</a>
+        <br><br>
+        {% if availabilities %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>场地</th>
+                        <th>日期</th>
+                        <th>开始时间</th>
+                        <th>结束时间</th>
+                        <th>更新时间</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for availability in availabilities %}
+                        <tr>
+                            <td>{{ availability.court.name }}</td>
+                            <td>{{ availability.date|date:"Y-m-d" }}</td>
+                            <td>{{ availability.start_time|time:"H:i" }}</td>
+                            <td>{{ availability.end_time|time:"H:i" }}</td>
+                            <td>{{ availability.updated_at|date:"Y-m-d H:i" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>暂无可用时间段设置。</p>
+        {% endif %}
+    </div>
+{% endblock %}

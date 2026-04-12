@@ -1,0 +1,23 @@
+{% extends 'booking/base.html' %}
+
+{% block title %}场地列表 - 羽毛球场地预约系统{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <h2>场地列表</h2>
+        {% if courts %}
+            <div class="grid">
+                {% for court in courts %}
+                    <div class="card">
+                        <h3>{{ court.name }}</h3>
+                        <p>{{ court.description|default:"暂无描述" }}</p>
+                        <br>
+                        <a href="{% url 'booking_form' court.id %}" class="btn">预约场地</a>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>暂无场地，请联系管理员添加场地。</p>
+        {% endif %}
+    </div>
+{% endblock %}
