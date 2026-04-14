@@ -3,21 +3,271 @@
 {% block title %}场地列表 - 羽毛球场地预约系统{% endblock %}
 
 {% block content %}
-    <div class="card">
-        <h2>场地列表</h2>
-        {% if courts %}
-            <div class="grid">
-                {% for court in courts %}
-                    <div class="card">
-                        <h3>{{ court.name }}</h3>
-                        <p>{{ court.description|default:"暂无描述" }}</p>
-                        <br>
-                        <a href="{% url 'booking_form' court.id %}" class="btn">预约场地</a>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p>暂无场地，请联系管理员添加场地。</p>
-        {% endif %}
+    <div class="page-header">
+        <h2>🏸 场地预约</h2>
+        <p>选择日期和时间段进行预约</p>
     </div>
+
+    <div class="date-selector">
+        <label for="booking-date">选择日期：</label>
+        <input type="date" id="booking-date" min="{{ today|date:'Y-m-d' }}" value="{{ today|date:'Y-m-d' }}">
+    </div>
+
+    <div id="time-slots-container">
+        <div class="no-availability">
+            <p>📅 请选择日期查看可用时间段</p>
+        </div>
+    </div>
+
+    <div id="booking-summary" class="booking-summary">
+        <h4>📋 预约确认</h4>
+        <p id="booking-info"></p>
+        <div class="booking-actions">
+            <button class="btn-confirm" onclick="confirmBooking()">确认预约</button>
+            <button class="btn-cancel" onclick="cancelSelection()">取消选择</button>
+        </div>
+    </div>
+
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-dot available"></div>
+            <span>可预约</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot booked"></div>
+            <span>已被预约</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot selected"></div>
+            <span>已选择</span>
+        </div>
+    </div>
+
+    <script>
+        let selectedSlots = [];
+        let selectedCourtId = null;
+        let currentDate = null;
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}年${month}月${day}日`;
+        }
+
+        function loadTimeSlots() {
+            const dateInput = document.getElementById('booking-date');
+            const selectedDate = dateInput.value;
+            
+            if (!selectedDate) return;
+            
+            currentDate = selectedDate;
+            selectedSlots = [];
+            selectedCourtId = null;
+            updateBookingSummary();
+            
+            fetch(`{% url 'get_time_slots' %}?date=${selectedDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    renderTimeSlots(data.courts);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('time-slots-container').innerHTML = 
+                        '<div class="no-availability"><p>❌ 加载失败，请重试</p></div>';
+                });
+        }
+
+        function renderTimeSlots(courts) {
+            const container = document.getElementById('time-slots-container');
+            
+            if (courts.length === 0) {
+                container.innerHTML = '<div class="no-availability"><p>🏟️ 暂无场地</p></div>';
+                return;
+            }
+
+            let html = '';
+            courts.forEach(court => {
+                html += `<div class="court-section">`;
+                html += `<div class="court-title"><h3>🏟️ ${court.name}</h3></div>`;
+                
+                if (!court.is_available) {
+                    html += `<div class="no-availability"><p>📅 该日期未开放预约</p></div>`;
+                } else if (court.time_slots.length === 0) {
+                    html += `<div class="no-availability"><p>📅 暂无可用时间段</p></div>`;
+                } else {
+                    html += `<div class="time-grid-container">`;
+                    html += `<div class="time-grid-header">`;
+                    html += `<h4>开放时间：${court.start_time} - ${court.end_time}</h4>`;
+                    html += `</div>`;
+                    html += `<div class="time-grid" data-court-id="${court.id}">`;
+                    
+                    court.time_slots.forEach(slot => {
+                        const statusClass = slot.is_booked ? 'booked' : 'available';
+                        html += `<div class="time-slot ${statusClass}" 
+                                    data-court-id="${court.id}"
+                                    data-start="${slot.start}" 
+                                    data-end="${slot.end}"
+                                    data-booked="${slot.is_booked}"
+                                    onclick="toggleSlot(this)">
+                                    ${slot.label}
+                                </div>`;
+                    });
+                    
+                    html += `</div></div>`;
+                }
+                
+                html += `</div>`;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function toggleSlot(element) {
+            if (element.classList.contains('booked')) {
+                return;
+            }
+
+            const courtId = element.dataset.courtId;
+            const start = element.dataset.start;
+            const end = element.dataset.end;
+            const slotKey = `${courtId}-${start}-${end}`;
+
+            if (selectedCourtId && selectedCourtId !== courtId) {
+                alert('请选择同一场地的时间段');
+                return;
+            }
+
+            if (element.classList.contains('selected')) {
+                element.classList.remove('selected');
+                element.classList.add('available');
+                selectedSlots = selectedSlots.filter(s => s.key !== slotKey);
+                
+                if (selectedSlots.length === 0) {
+                    selectedCourtId = null;
+                }
+            } else {
+                element.classList.remove('available');
+                element.classList.add('selected');
+                selectedSlots.push({
+                    key: slotKey,
+                    courtId: courtId,
+                    start: start,
+                    end: end
+                });
+                selectedCourtId = courtId;
+            }
+
+            updateBookingSummary();
+        }
+
+        function updateBookingSummary() {
+            const summary = document.getElementById('booking-summary');
+            const info = document.getElementById('booking-info');
+
+            if (selectedSlots.length === 0) {
+                summary.classList.remove('show');
+                return;
+            }
+
+            summary.classList.add('show');
+
+            const sortedSlots = [...selectedSlots].sort((a, b) => a.start.localeCompare(b.start));
+            const startTime = sortedSlots[0].start;
+            const lastSlot = sortedSlots[sortedSlots.length - 1];
+            
+            let totalMinutes = 0;
+            sortedSlots.forEach(slot => {
+                const [sh, sm] = slot.start.split(':').map(Number);
+                const [eh, em] = slot.end.split(':').map(Number);
+                totalMinutes += (eh * 60 + em) - (sh * 60 + sm);
+            });
+
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+            let duration = '';
+            if (hours > 0) duration += `${hours}小时`;
+            if (minutes > 0) duration += `${minutes}分钟`;
+
+            info.innerHTML = `已选择 <strong>${formatDate(currentDate)}</strong>，时间：<strong>${startTime} - ${lastSlot.end}</strong>，共 <strong>${duration}</strong>`;
+        }
+
+        function cancelSelection() {
+            document.querySelectorAll('.time-slot.selected').forEach(el => {
+                el.classList.remove('selected');
+                el.classList.add('available');
+            });
+            selectedSlots = [];
+            selectedCourtId = null;
+            updateBookingSummary();
+        }
+
+        function confirmBooking() {
+            if (selectedSlots.length === 0) {
+                alert('请先选择时间段');
+                return;
+            }
+
+            const sortedSlots = [...selectedSlots].sort((a, b) => a.start.localeCompare(b.start));
+            
+            const hasGap = checkForGaps(sortedSlots);
+            if (hasGap) {
+                alert('请选择连续的时间段');
+                return;
+            }
+
+            const startTime = sortedSlots[0].start;
+            const lastSlot = sortedSlots[sortedSlots.length - 1];
+            const endTime = lastSlot.end;
+
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                              document.cookie.match(/csrftoken=([^;]+)/)?.[1];
+
+            fetch('{% url "create_booking_api" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    court_id: selectedCourtId,
+                    date: currentDate,
+                    start_time: startTime,
+                    end_time: endTime
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('预约成功！');
+                    window.location.href = '{% url "my_bookings" %}';
+                } else {
+                    alert('预约失败：' + (data.error || '未知错误'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('预约失败，请重试');
+            });
+        }
+
+        function checkForGaps(slots) {
+            if (slots.length <= 1) return false;
+            
+            for (let i = 0; i < slots.length - 1; i++) {
+                const currentEnd = slots[i].end;
+                const nextStart = slots[i + 1].start;
+                
+                if (currentEnd !== nextStart) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        document.getElementById('booking-date').addEventListener('change', loadTimeSlots);
+        
+        loadTimeSlots();
+    </script>
 {% endblock %}

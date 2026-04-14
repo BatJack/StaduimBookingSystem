@@ -4,6 +4,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.utils import timezone
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST, require_GET
 from datetime import datetime, timedelta, time
 from .models import Court, CourtAvailability, Booking
 
@@ -29,7 +31,13 @@ def logout_view(request):
 @login_required
 def court_list(request):
     courts = Court.objects.all()
-    return render(request, 'booking/court_list.html', {'courts': courts})
+    today = timezone.now().date()
+    for court in courts:
+        court.is_available_today = CourtAvailability.objects.filter(
+            court=court,
+            date=today
+        ).exists()
+    return render(request, 'booking/court_list.html', {'courts': courts, 'today': today})
 
 
 @login_required
@@ -378,3 +386,136 @@ def admin_booking_add(request):
         'courts': Court.objects.all(),
         'users': User.objects.all(),
     })
+
+
+@login_required
+@require_GET
+def get_time_slots(request):
+    date_str = request.GET.get('date')
+    if not date_str:
+        return JsonResponse({'error': '缺少日期参数'}, status=400)
+    
+    try:
+        selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        return JsonResponse({'error': '日期格式错误'}, status=400)
+    
+    courts = Court.objects.all()
+    data = []
+    
+    for court in courts:
+        availability = CourtAvailability.objects.filter(
+            court=court,
+            date=selected_date
+        ).first()
+        
+        court_data = {
+            'id': court.id,
+            'name': court.name,
+            'description': court.description,
+            'is_available': availability is not None,
+            'start_time': availability.start_time.strftime('%H:%M') if availability else None,
+            'end_time': availability.end_time.strftime('%H:%M') if availability else None,
+            'time_slots': []
+        }
+        
+        if availability:
+            bookings = Booking.objects.filter(
+                court=court,
+                date=selected_date,
+                status='active'
+            ).values_list('start_time', 'end_time')
+            
+            booked_slots = set()
+            for start, end in bookings:
+                current = datetime.combine(selected_date, start)
+                end_dt = datetime.combine(selected_date, end)
+                while current < end_dt:
+                    booked_slots.add(current.time())
+                    current += timedelta(minutes=30)
+            
+            current_time = datetime.combine(selected_date, availability.start_time)
+            end_time_dt = datetime.combine(selected_date, availability.end_time)
+            
+            while current_time < end_time_dt:
+                slot_time = current_time.time()
+                slot_end = (current_time + timedelta(minutes=30)).time()
+                
+                is_booked = slot_time in booked_slots
+                
+                court_data['time_slots'].append({
+                    'start': slot_time.strftime('%H:%M'),
+                    'end': slot_end.strftime('%H:%M'),
+                    'label': f"{slot_time.strftime('%H:%M')}-{slot_end.strftime('%H:%M')}",
+                    'is_booked': is_booked
+                })
+                
+                current_time += timedelta(minutes=30)
+        
+        data.append(court_data)
+    
+    return JsonResponse({'courts': data})
+
+
+@login_required
+@require_POST
+def create_booking_api(request):
+    import json
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': '无效的请求数据'}, status=400)
+    
+    court_id = data.get('court_id')
+    date_str = data.get('date')
+    start_time_str = data.get('start_time')
+    end_time_str = data.get('end_time')
+    
+    if not all([court_id, date_str, start_time_str, end_time_str]):
+        return JsonResponse({'error': '缺少必要参数'}, status=400)
+    
+    try:
+        court = Court.objects.get(id=court_id)
+        booking_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        start_time = datetime.strptime(start_time_str, '%H:%M').time()
+        end_time = datetime.strptime(end_time_str, '%H:%M').time()
+    except (Court.DoesNotExist, ValueError):
+        return JsonResponse({'error': '参数错误'}, status=400)
+    
+    if start_time >= end_time:
+        return JsonResponse({'error': '结束时间必须大于开始时间'}, status=400)
+    
+    availability = CourtAvailability.objects.filter(
+        court=court,
+        date=booking_date
+    ).first()
+    
+    if not availability:
+        return JsonResponse({'error': '该日期场地未开放'}, status=400)
+    
+    if start_time < availability.start_time or end_time > availability.end_time:
+        return JsonResponse({'error': '预约时间不在场地开放时间内'}, status=400)
+    
+    conflicting_bookings = Booking.objects.filter(
+        court=court,
+        date=booking_date,
+        status='active'
+    ).exclude(
+        end_time__lte=start_time
+    ).exclude(
+        start_time__gte=end_time
+    )
+    
+    if conflicting_bookings.exists():
+        return JsonResponse({'error': '该时间段已被预约'}, status=400)
+    
+    Booking.objects.create(
+        user=request.user,
+        court=court,
+        date=booking_date,
+        start_time=start_time,
+        end_time=end_time,
+        status='active'
+    )
+    
+    return JsonResponse({'success': True, 'message': '预约成功'})
