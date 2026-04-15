@@ -17,9 +17,9 @@
                     <thead>
                         <tr>
                             <th>场地</th>
-                            <th>日期</th>
-                            <th>开始时间</th>
-                            <th>结束时间</th>
+                            <th>开始日期</th>
+                            <th>结束日期</th>
+                            <th>每天开放时间</th>
                             <th>更新时间</th>
                         </tr>
                     </thead>
@@ -29,9 +29,9 @@
                                 <td>
                                     <span class="badge badge-primary">{{ availability.court.name }}</span>
                                 </td>
-                                <td>{{ availability.date|date:"Y-m-d" }}</td>
-                                <td>{{ availability.start_time|time:"H:i" }}</td>
-                                <td>{{ availability.end_time|time:"H:i" }}</td>
+                                <td>{{ availability.start_date|date:"Y-m-d" }}</td>
+                                <td>{{ availability.end_date|date:"Y-m-d" }}</td>
+                                <td>{{ availability.start_time|time:"H:i" }} - {{ availability.end_time|time:"H:i" }}</td>
                                 <td>{{ availability.updated_at|date:"Y-m-d H:i" }}</td>
                             </tr>
                         {% endfor %}

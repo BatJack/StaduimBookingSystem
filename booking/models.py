@@ -19,20 +19,24 @@ class Court(models.Model):
 
 class CourtAvailability(models.Model):
     court = models.ForeignKey(Court, on_delete=models.CASCADE, related_name='availabilities', verbose_name='场地')
-    date = models.DateField(verbose_name='日期')
-    start_time = models.TimeField(verbose_name='开始时间')
-    end_time = models.TimeField(verbose_name='结束时间')
+    start_date = models.DateField(verbose_name='开始日期')
+    end_date = models.DateField(verbose_name='结束日期')
+    start_time = models.TimeField(verbose_name='每天开始时间')
+    end_time = models.TimeField(verbose_name='每天结束时间')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
 
     class Meta:
         verbose_name = '场地可用时间段'
         verbose_name_plural = '场地可用时间段'
-        unique_together = ['court', 'date']
-        ordering = ['date', 'start_time']
+        ordering = ['start_date', 'start_time']
 
     def __str__(self):
-        return f'{self.court.name} - {self.date} {self.start_time}-{self.end_time}'
+        return f'{self.court.name} - {self.start_date} 至 {self.end_date} {self.start_time}-{self.end_time}'
+
+    def is_date_available(self, date):
+        """检查指定日期是否在该可用时间段内"""
+        return self.start_date <= date <= self.end_date
 
 
 class Booking(models.Model):

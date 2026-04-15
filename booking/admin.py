@@ -11,9 +11,9 @@ class CourtAdmin(admin.ModelAdmin):
 
 @admin.register(CourtAvailability)
 class CourtAvailabilityAdmin(admin.ModelAdmin):
-    list_display = ['court', 'date', 'start_time', 'end_time', 'created_at', 'updated_at']
-    list_filter = ['court', 'date']
-    date_hierarchy = 'date'
+    list_display = ['court', 'start_date', 'end_date', 'start_time', 'end_time', 'created_at', 'updated_at']
+    list_filter = ['court', 'start_date']
+    date_hierarchy = 'start_date'
 
 
 @admin.register(Booking)

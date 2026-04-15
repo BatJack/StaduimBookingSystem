@@ -7,7 +7,6 @@ urlpatterns = [
     path('courts/', views.court_list, name='court_list'),
     path('api/time-slots/', views.get_time_slots, name='get_time_slots'),
     path('api/create-booking/', views.create_booking_api, name='create_booking_api'),
-    path('booking/<int:court_id>/', views.booking_form, name='booking_form'),
     path('my-bookings/', views.my_bookings, name='my_bookings'),
     path('cancel-booking/<int:booking_id>/', views.cancel_booking, name='cancel_booking'),
     path('admin/', views.admin_dashboard, name='admin_dashboard'),

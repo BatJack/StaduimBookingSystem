@@ -32,98 +32,7 @@ def logout_view(request):
 def court_list(request):
     courts = Court.objects.all()
     today = timezone.now().date()
-    for court in courts:
-        court.is_available_today = CourtAvailability.objects.filter(
-            court=court,
-            date=today
-        ).exists()
     return render(request, 'booking/court_list.html', {'courts': courts, 'today': today})
-
-
-@login_required
-def booking_form(request, court_id):
-    court = get_object_or_404(Court, id=court_id)
-    today = timezone.now().date()
-    
-    if request.method == 'POST':
-        date_str = request.POST.get('date')
-        start_time_str = request.POST.get('start_time')
-        end_time_str = request.POST.get('end_time')
-        
-        try:
-            booking_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-            start_time = datetime.strptime(start_time_str, '%H:%M').time()
-            end_time = datetime.strptime(end_time_str, '%H:%M').time()
-            
-            if start_time >= end_time:
-                messages.error(request, '结束时间必须大于开始时间')
-                return render(request, 'booking/booking_form.html', {
-                    'court': court,
-                    'today': today,
-                })
-            
-            if start_time.minute not in [0, 30] or end_time.minute not in [0, 30]:
-                messages.error(request, '时间必须是整点或半点')
-                return render(request, 'booking/booking_form.html', {
-                    'court': court,
-                    'today': today,
-                })
-            
-            availability = CourtAvailability.objects.filter(
-                court=court,
-                date=booking_date
-            ).first()
-            
-            if not availability:
-                messages.error(request, '该日期场地未开放')
-                return render(request, 'booking/booking_form.html', {
-                    'court': court,
-                    'today': today,
-                })
-            
-            if start_time < availability.start_time or end_time > availability.end_time:
-                messages.error(request, '预约时间不在场地开放时间内')
-                return render(request, 'booking/booking_form.html', {
-                    'court': court,
-                    'today': today,
-                })
-            
-            conflicting_bookings = Booking.objects.filter(
-                court=court,
-                date=booking_date,
-                status='active'
-            ).exclude(
-                end_time__lte=start_time
-            ).exclude(
-                start_time__gte=end_time
-            )
-            
-            if conflicting_bookings.exists():
-                messages.error(request, '该时间段已被预约')
-                return render(request, 'booking/booking_form.html', {
-                    'court': court,
-                    'today': today,
-                })
-            
-            Booking.objects.create(
-                user=request.user,
-                court=court,
-                date=booking_date,
-                start_time=start_time,
-                end_time=end_time,
-                status='active'
-            )
-            
-            messages.success(request, '预约成功')
-            return redirect('my_bookings')
-            
-        except ValueError:
-            messages.error(request, '时间格式错误')
-    
-    return render(request, 'booking/booking_form.html', {
-        'court': court,
-        'today': today,
-    })
 
 
 @login_required
@@ -236,8 +145,8 @@ def admin_availability_list(request):
     today = timezone.now().date()
     
     availabilities = CourtAvailability.objects.filter(
-        date__gte=today
-    ).select_related('court').order_by('date', 'start_time')
+        end_date__gte=today
+    ).select_related('court').order_by('start_date', 'start_time')
     
     return render(request, 'booking/admin_availability_list.html', {
         'availabilities': availabilities,
@@ -253,15 +162,23 @@ def admin_availability_add(request):
     
     if request.method == 'POST':
         court_id = request.POST.get('court')
-        date_str = request.POST.get('date')
+        start_date_str = request.POST.get('start_date')
+        end_date_str = request.POST.get('end_date')
         start_time_str = request.POST.get('start_time')
         end_time_str = request.POST.get('end_time')
         
         try:
             court = Court.objects.get(id=court_id)
-            date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
             start_time = datetime.strptime(start_time_str, '%H:%M').time()
             end_time = datetime.strptime(end_time_str, '%H:%M').time()
+            
+            if start_date > end_date:
+                messages.error(request, '结束日期必须大于等于开始日期')
+                return render(request, 'booking/admin_availability_form.html', {
+                    'courts': Court.objects.all(),
+                })
             
             if start_time >= end_time:
                 messages.error(request, '结束时间必须大于开始时间')
@@ -269,13 +186,12 @@ def admin_availability_add(request):
                     'courts': Court.objects.all(),
                 })
             
-            CourtAvailability.objects.update_or_create(
+            CourtAvailability.objects.create(
                 court=court,
-                date=date,
-                defaults={
-                    'start_time': start_time,
-                    'end_time': end_time
-                }
+                start_date=start_date,
+                end_date=end_date,
+                start_time=start_time,
+                end_time=end_time
             )
             
             messages.success(request, '可用时间段设置成功')
@@ -337,7 +253,8 @@ def admin_booking_add(request):
             
             availability = CourtAvailability.objects.filter(
                 court=court,
-                date=booking_date
+                start_date__lte=booking_date,
+                end_date__gte=booking_date
             ).first()
             
             if not availability:
@@ -414,7 +331,8 @@ def get_time_slots(request):
     for court in courts:
         availability = CourtAvailability.objects.filter(
             court=court,
-            date=selected_date
+            start_date__lte=selected_date,
+            end_date__gte=selected_date
         ).first()
         
         court_data = {
@@ -495,7 +413,8 @@ def create_booking_api(request):
     
     availability = CourtAvailability.objects.filter(
         court=court,
-        date=booking_date
+        start_date__lte=booking_date,
+        end_date__gte=booking_date
     ).first()
     
     if not availability:
