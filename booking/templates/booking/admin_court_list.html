@@ -3,38 +3,54 @@
 {% block title %}场地管理 - 羽毛球场地预约系统{% endblock %}
 
 {% block content %}
+    <div class="page-title">场地管理</div>
+
     <div class="card">
-        <h2>场地管理</h2>
-        <a href="{% url 'admin_court_add' %}" class="btn btn-success">添加场地</a>
-        <br><br>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin: 0;">场地列表</h2>
+            <a href="{% url 'admin_court_add' %}" class="btn btn-success">+ 添加场地</a>
+        </div>
+
         {% if courts %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>场地名称</th>
-                        <th>描述</th>
-                        <th>创建时间</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for court in courts %}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
                         <tr>
-                            <td>{{ court.id }}</td>
-                            <td>{{ court.name }}</td>
-                            <td>{{ court.description|default:"暂无描述" }}</td>
-                            <td>{{ court.created_at|date:"Y-m-d H:i" }}</td>
-                            <td>
-                                <a href="{% url 'admin_court_edit' court.id %}" class="btn">编辑</a>
-                                <a href="{% url 'admin_court_delete' court.id %}" class="btn btn-danger" onclick="return confirm('确定要删除这个场地吗？')">删除</a>
-                            </td>
+                            <th style="width: 60px;">ID</th>
+                            <th>场地名称</th>
+                            <th>描述</th>
+                            <th>创建时间</th>
+                            <th style="width: 160px;">操作</th>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {% for court in courts %}
+                            <tr>
+                                <td>
+                                    <span class="badge badge-primary">{{ court.id }}</span>
+                                </td>
+                                <td>
+                                    <strong>{{ court.name }}</strong>
+                                </td>
+                                <td>{{ court.description|default:"暂无描述" }}</td>
+                                <td>{{ court.created_at|date:"Y-m-d H:i" }}</td>
+                                <td>
+                                    <div class="action-btns">
+                                        <a href="{% url 'admin_court_edit' court.id %}" class="btn btn-sm btn-outline">编辑</a>
+                                        <a href="{% url 'admin_court_delete' court.id %}" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除这个场地吗？')">删除</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         {% else %}
-            <p>暂无场地。</p>
+            <div class="empty-state">
+                <div class="empty-state-icon">🏸</div>
+                <h3>暂无场地</h3>
+                <p>点击上方"添加场地"按钮创建第一个场地</p>
+            </div>
         {% endif %}
     </div>
 {% endblock %}

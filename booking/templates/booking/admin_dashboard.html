@@ -3,27 +3,50 @@
 {% block title %}管理后台 - 羽毛球场地预约系统{% endblock %}
 
 {% block content %}
-    <div class="card">
-        <h2>管理后台</h2>
-        <div class="grid">
-            <div class="card">
-                <h3>场地管理</h3>
-                <p>添加、编辑和删除场地</p>
-                <br>
-                <a href="{% url 'admin_court_list' %}" class="btn">管理场地</a>
+    <div class="page-title">管理后台</div>
+
+    <div class="stat-cards">
+        <div class="stat-card">
+            <div class="stat-card-icon blue">🏸</div>
+            <div class="stat-card-value">{{ courts_count|default:"0" }}</div>
+            <div class="stat-card-label">场地总数</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-icon green">📅</div>
+            <div class="stat-card-value">{{ bookings_count|default:"0" }}</div>
+            <div class="stat-card-label">预约总数</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-icon orange">⏰</div>
+            <div class="stat-card-value">{{ availabilities_count|default:"0" }}</div>
+            <div class="stat-card-label">可用时段</div>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
+                <div class="stat-card-icon blue" style="margin-bottom: 0; width: 40px; height: 40px; font-size: 20px;">🏸</div>
+                <h3 style="margin: 0;">场地管理</h3>
             </div>
-            <div class="card">
-                <h3>可用时间段管理</h3>
-                <p>设置场地每天的开放时间</p>
-                <br>
-                <a href="{% url 'admin_availability_list' %}" class="btn">管理时间段</a>
+            <p style="color: var(--gray-500); font-size: 14px; margin-bottom: 20px;">添加、编辑和删除场地信息</p>
+            <a href="{% url 'admin_court_list' %}" class="btn">管理场地</a>
+        </div>
+        <div class="card">
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
+                <div class="stat-card-icon orange" style="margin-bottom: 0; width: 40px; height: 40px; font-size: 20px;">⏰</div>
+                <h3 style="margin: 0;">可用时间段</h3>
             </div>
-            <div class="card">
-                <h3>预约管理</h3>
-                <p>查看和管理所有预约</p>
-                <br>
-                <a href="{% url 'admin_bookings' %}" class="btn">管理预约</a>
+            <p style="color: var(--gray-500); font-size: 14px; margin-bottom: 20px;">设置场地每天的开放时间</p>
+            <a href="{% url 'admin_availability_list' %}" class="btn">管理时间段</a>
+        </div>
+        <div class="card">
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
+                <div class="stat-card-icon green" style="margin-bottom: 0; width: 40px; height: 40px; font-size: 20px;">📋</div>
+                <h3 style="margin: 0;">预约管理</h3>
             </div>
+            <p style="color: var(--gray-500); font-size: 14px; margin-bottom: 20px;">查看和管理所有预约记录</p>
+            <a href="{% url 'admin_bookings' %}" class="btn">管理预约</a>
         </div>
     </div>
 {% endblock %}

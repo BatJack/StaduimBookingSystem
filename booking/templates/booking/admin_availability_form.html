@@ -3,8 +3,9 @@
 {% block title %}设置可用时间段 - 羽毛球场地预约系统{% endblock %}
 
 {% block content %}
+    <div class="page-title">设置可用时间段</div>
+
     <div class="card" style="max-width: 600px; margin: 0 auto;">
-        <h2>设置可用时间段</h2>
         <form method="post">
             {% csrf_token %}
             <div class="form-group">
@@ -30,8 +31,10 @@
                 <input type="time" id="end_time" name="end_time" step="1800" required>
                 <small>时间必须是整点或半点</small>
             </div>
-            <button type="submit" class="btn">设置</button>
-            <a href="{% url 'admin_availability_list' %}" class="btn btn-danger">取消</a>
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+                <button type="submit" class="btn btn-success">设置</button>
+                <a href="{% url 'admin_availability_list' %}" class="btn btn-outline">取消</a>
+            </div>
         </form>
     </div>
 {% endblock %}

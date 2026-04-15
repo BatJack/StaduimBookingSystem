@@ -3,45 +3,69 @@
 {% block title %}预约管理 - 羽毛球场地预约系统{% endblock %}
 
 {% block content %}
+    <div class="page-title">预约管理</div>
+
     <div class="card">
-        <h2>预约管理</h2>
-        <a href="{% url 'admin_booking_add' %}" class="btn btn-success">添加预约</a>
-        <br><br>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin: 0;">预约列表</h2>
+            <a href="{% url 'admin_booking_add' %}" class="btn btn-success">+ 添加预约</a>
+        </div>
+
         {% if bookings %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>用户</th>
-                        <th>场地</th>
-                        <th>日期</th>
-                        <th>开始时间</th>
-                        <th>结束时间</th>
-                        <th>状态</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for booking in bookings %}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
                         <tr>
-                            <td>{{ booking.id }}</td>
-                            <td>{{ booking.user.username }}</td>
-                            <td>{{ booking.court.name }}</td>
-                            <td>{{ booking.date|date:"Y-m-d" }}</td>
-                            <td>{{ booking.start_time|time:"H:i" }}</td>
-                            <td>{{ booking.end_time|time:"H:i" }}</td>
-                            <td>{{ booking.get_status_display }}</td>
-                            <td>
-                                {% if booking.status == 'active' %}
-                                    <a href="{% url 'cancel_booking' booking.id %}" class="btn btn-danger" onclick="return confirm('确定要取消这个预约吗？')">取消</a>
-                                {% endif %}
-                            </td>
+                            <th style="width: 60px;">ID</th>
+                            <th>用户</th>
+                            <th>场地</th>
+                            <th>日期</th>
+                            <th>时间</th>
+                            <th>状态</th>
+                            <th style="width: 100px;">操作</th>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {% for booking in bookings %}
+                            <tr>
+                                <td>
+                                    <span class="badge badge-primary">{{ booking.id }}</span>
+                                </td>
+                                <td>
+                                    <strong>{{ booking.user.username }}</strong>
+                                </td>
+                                <td>{{ booking.court.name }}</td>
+                                <td>{{ booking.date|date:"Y-m-d" }}</td>
+                                <td>{{ booking.start_time|time:"H:i" }} - {{ booking.end_time|time:"H:i" }}</td>
+                                <td>
+                                    {% if booking.status == 'active' %}
+                                        <span class="badge badge-success">进行中</span>
+                                    {% elif booking.status == 'cancelled' %}
+                                        <span class="badge badge-danger">已取消</span>
+                                    {% elif booking.status == 'completed' %}
+                                        <span class="badge badge-warning">已完成</span>
+                                    {% else %}
+                                        <span class="badge">{{ booking.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if booking.status == 'active' %}
+                                        <div class="action-btns">
+                                            <a href="{% url 'cancel_booking' booking.id %}" class="btn btn-sm btn-danger" onclick="return confirm('确定要取消这个预约吗？')">取消</a>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         {% else %}
-            <p>暂无预约记录。</p>
+            <div class="empty-state">
+                <div class="empty-state-icon">📋</div>
+                <h3>暂无预约记录</h3>
+                <p>点击上方"添加预约"按钮创建预约</p>
+            </div>
         {% endif %}
     </div>
 {% endblock %}

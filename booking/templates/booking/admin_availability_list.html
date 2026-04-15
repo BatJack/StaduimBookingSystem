@@ -3,35 +3,47 @@
 {% block title %}可用时间段管理 - 羽毛球场地预约系统{% endblock %}
 
 {% block content %}
+    <div class="page-title">可用时间段管理</div>
+
     <div class="card">
-        <h2>可用时间段管理</h2>
-        <a href="{% url 'admin_availability_add' %}" class="btn btn-success">设置时间段</a>
-        <br><br>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin: 0;">时间段列表</h2>
+            <a href="{% url 'admin_availability_add' %}" class="btn btn-success">+ 设置时间段</a>
+        </div>
+
         {% if availabilities %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>场地</th>
-                        <th>日期</th>
-                        <th>开始时间</th>
-                        <th>结束时间</th>
-                        <th>更新时间</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for availability in availabilities %}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
                         <tr>
-                            <td>{{ availability.court.name }}</td>
-                            <td>{{ availability.date|date:"Y-m-d" }}</td>
-                            <td>{{ availability.start_time|time:"H:i" }}</td>
-                            <td>{{ availability.end_time|time:"H:i" }}</td>
-                            <td>{{ availability.updated_at|date:"Y-m-d H:i" }}</td>
+                            <th>场地</th>
+                            <th>日期</th>
+                            <th>开始时间</th>
+                            <th>结束时间</th>
+                            <th>更新时间</th>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {% for availability in availabilities %}
+                            <tr>
+                                <td>
+                                    <span class="badge badge-primary">{{ availability.court.name }}</span>
+                                </td>
+                                <td>{{ availability.date|date:"Y-m-d" }}</td>
+                                <td>{{ availability.start_time|time:"H:i" }}</td>
+                                <td>{{ availability.end_time|time:"H:i" }}</td>
+                                <td>{{ availability.updated_at|date:"Y-m-d H:i" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         {% else %}
-            <p>暂无可用时间段设置。</p>
+            <div class="empty-state">
+                <div class="empty-state-icon">⏰</div>
+                <h3>暂无可用时间段</h3>
+                <p>点击上方"设置时间段"按钮添加可用时间</p>
+            </div>
         {% endif %}
     </div>
 {% endblock %}

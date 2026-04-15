@@ -158,7 +158,15 @@ def admin_dashboard(request):
         messages.error(request, '您没有权限访问此页面')
         return redirect('court_list')
     
-    return render(request, 'booking/admin_dashboard.html')
+    courts_count = Court.objects.count()
+    bookings_count = Booking.objects.count()
+    availabilities_count = CourtAvailability.objects.count()
+    
+    return render(request, 'booking/admin_dashboard.html', {
+        'courts_count': courts_count,
+        'bookings_count': bookings_count,
+        'availabilities_count': availabilities_count
+    })
 
 
 @login_required
