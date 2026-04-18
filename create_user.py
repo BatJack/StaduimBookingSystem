@@ -240,7 +240,8 @@ class UserCreatorApp:
                 username=username,
                 password=password,
                 email=email,
-                is_staff=(user_type == "admin")
+                is_staff=(user_type == "admin"),
+                is_superuser=(user_type == "admin")
             )
 
             Profile.objects.create(
