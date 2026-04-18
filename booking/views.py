@@ -326,15 +326,19 @@ def admin_booking_add(request):
 @require_GET
 def get_time_slots(request):
     date_str = request.GET.get('date')
+    court_id = request.GET.get('court_id')
+
     if not date_str:
         return JsonResponse({'error': '缺少日期参数'}, status=400)
-    
+
     try:
         selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
     except ValueError:
         return JsonResponse({'error': '日期格式错误'}, status=400)
-    
+
     courts = Court.objects.all()
+    if court_id:
+        courts = courts.filter(id=court_id)
     data = []
     
     for court in courts:

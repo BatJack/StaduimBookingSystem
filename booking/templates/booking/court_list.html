@@ -11,6 +11,13 @@
     <div class="date-selector">
         <label for="booking-date">选择日期：</label>
         <input type="date" id="booking-date" min="{{ today|date:'Y-m-d' }}" value="{{ today|date:'Y-m-d' }}">
+        <label for="court-filter">选择场馆：</label>
+        <select id="court-filter">
+            <option value="">全部场馆</option>
+            {% for court in courts %}
+            <option value="{{ court.id }}">{{ court.name }}</option>
+            {% endfor %}
+        </select>
     </div>
 
     <div id="time-slots-container">
@@ -44,6 +51,20 @@
     </div>
 
     <style>
+        .date-selector select {
+            padding: 10px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .date-selector select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
         .court-section {
             background: white;
             border-radius: 16px;
@@ -273,15 +294,22 @@
         function loadTimeSlots() {
             const dateInput = document.getElementById('booking-date');
             const selectedDate = dateInput.value;
-            
+            const courtFilter = document.getElementById('court-filter');
+            const filterCourtId = courtFilter.value;
+
             if (!selectedDate) return;
-            
+
             currentDate = selectedDate;
             selectedSlots = [];
             selectedCourtId = null;
             updateBookingSummary();
-            
-            fetch(`{% url 'get_time_slots' %}?date=${selectedDate}`)
+
+            let url = `{% url 'get_time_slots' %}?date=${selectedDate}`;
+            if (filterCourtId) {
+                url += `&court_id=${filterCourtId}`;
+            }
+
+            fetch(url)
                 .then(response => response.json())
                 .then(data => {
                     renderTimeSlots(data.courts);
@@ -500,7 +528,8 @@
         }
 
         document.getElementById('booking-date').addEventListener('change', loadTimeSlots);
-        
+        document.getElementById('court-filter').addEventListener('change', loadTimeSlots);
+
         loadTimeSlots();
     </script>
 {% endblock %}
