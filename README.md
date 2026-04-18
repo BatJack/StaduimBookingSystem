@@ -19,6 +19,19 @@
 
 ---
 
+## 界面预览
+
+### 登录页面
+![登录页面](assets/login.png)
+
+### 创建用户
+![创建用户](assets/create_user.png)
+
+### 场地预约
+![场地预约](assets/book_court.png)
+
+---
+
 ## 快速开始（零基础用户）
 
 ### 第一步：安装Python
@@ -56,16 +69,16 @@ pip install django
    python manage.py migrate
    ```
 
-### 第五步：创建管理员账号
+### 第五步：创建用户
 
 在项目目录下执行：
 ```
-python create_admin.py
+python create_user.py
 ```
 
-默认管理员账号：
-- 用户名：`admin`
-- 密码：`admin123`
+运行后选择用户类型：
+- **管理员**：可访问管理后台，管理场地、时间段、预约
+- **普通用户**：可预约场地、查看和取消自己的预约
 
 ### 第六步：启动系统
 
@@ -77,8 +90,6 @@ python manage.py runserver
 ### 第七步：访问系统
 
 打开浏览器，访问：http://127.0.0.1:8000/
-
-使用管理员账号登录后即可开始使用。
 
 ---
 
@@ -102,14 +113,6 @@ python manage.py runserver
 4. 点击"确认预约"
 5. 在"我的预约"中可查看和取消预约
 
-### 创建普通用户
-
-1. 访问 http://127.0.0.1:8000/admin/
-2. 使用管理员账号登录
-3. 点击"Users" → "Add User"
-4. 填写用户名和密码，**不要勾选**"Superuser status"
-5. 保存后该用户即可登录预约
-
 ---
 
 ## 常用命令
@@ -122,8 +125,8 @@ python manage.py runserver
 python manage.py makemigrations
 python manage.py migrate
 
-# 创建管理员
-python create_admin.py
+# 创建用户（支持管理员/普通用户）
+python create_user.py
 ```
 
 ---
@@ -134,3 +137,4 @@ python create_admin.py
 2. 预约时间不能与他人预约冲突
 3. 管理员可取消任何用户的预约
 4. 关闭命令提示符即关闭服务器，需重新运行 `runserver` 启动
+5. 用户类型由 Profile 模型控制，与 Django 内置的 is_staff/is_superuser 独立
