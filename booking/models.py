@@ -2,6 +2,25 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
+class Profile(models.Model):
+    USER_TYPE_CHOICES = [
+        ('admin', '管理员'),
+        ('regular', '普通用户'),
+    ]
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile', verbose_name='用户')
+    user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default='regular', verbose_name='用户类型')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+
+    class Meta:
+        verbose_name = '用户类型'
+        verbose_name_plural = '用户类型'
+
+    def __str__(self):
+        return f'{self.user.username} - {self.get_user_type_display()}'
+
+
 class Court(models.Model):
     name = models.CharField(max_length=100, verbose_name='场地名称')
     description = models.TextField(blank=True, verbose_name='场地描述')

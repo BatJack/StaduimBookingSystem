@@ -7,7 +7,14 @@ from django.utils import timezone
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST, require_GET
 from datetime import datetime, timedelta, time
-from .models import Court, CourtAvailability, Booking
+from .models import Court, CourtAvailability, Booking, Profile
+
+
+def is_admin_user(user):
+    try:
+        return user.profile.user_type == 'admin'
+    except Profile.DoesNotExist:
+        return False
 
 
 def login_view(request):
@@ -17,6 +24,8 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         if user:
             login(request, user)
+            if is_admin_user(user):
+                return redirect('admin_dashboard')
             return redirect('court_list')
         else:
             messages.error(request, '用户名或密码错误')
@@ -48,7 +57,7 @@ def my_bookings(request):
 def cancel_booking(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id)
     
-    if booking.user != request.user and not request.user.is_staff:
+    if booking.user != request.user and not is_admin_user(request.user):
         messages.error(request, '您没有权限取消此预约')
         return redirect('my_bookings')
     
@@ -56,14 +65,14 @@ def cancel_booking(request, booking_id):
     booking.save()
     messages.success(request, '预约已取消')
     
-    if request.user.is_staff:
+    if is_admin_user(request.user):
         return redirect('admin_bookings')
     return redirect('my_bookings')
 
 
 @login_required
 def admin_dashboard(request):
-    if not request.user.is_staff:
+    if not is_admin_user(request.user):
         messages.error(request, '您没有权限访问此页面')
         return redirect('court_list')
     
@@ -80,7 +89,7 @@ def admin_dashboard(request):
 
 @login_required
 def admin_court_list(request):
-    if not request.user.is_staff:
+    if not is_admin_user(request.user):
         messages.error(request, '您没有权限访问此页面')
         return redirect('court_list')
     
@@ -90,7 +99,7 @@ def admin_court_list(request):
 
 @login_required
 def admin_court_add(request):
-    if not request.user.is_staff:
+    if not is_admin_user(request.user):
         messages.error(request, '您没有权限访问此页面')
         return redirect('court_list')
     
@@ -107,7 +116,7 @@ def admin_court_add(request):
 
 @login_required
 def admin_court_edit(request, court_id):
-    if not request.user.is_staff:
+    if not is_admin_user(request.user):
         messages.error(request, '您没有权限访问此页面')
         return redirect('court_list')
     
@@ -125,7 +134,7 @@ def admin_court_edit(request, court_id):
 
 @login_required
 def admin_court_delete(request, court_id):
-    if not request.user.is_staff:
+    if not is_admin_user(request.user):
         messages.error(request, '您没有权限访问此页面')
         return redirect('court_list')
     
@@ -137,7 +146,7 @@ def admin_court_delete(request, court_id):
 
 @login_required
 def admin_availability_list(request):
-    if not request.user.is_staff:
+    if not is_admin_user(request.user):
         messages.error(request, '您没有权限访问此页面')
         return redirect('court_list')
     
@@ -156,7 +165,7 @@ def admin_availability_list(request):
 
 @login_required
 def admin_availability_add(request):
-    if not request.user.is_staff:
+    if not is_admin_user(request.user):
         messages.error(request, '您没有权限访问此页面')
         return redirect('court_list')
     
@@ -209,7 +218,7 @@ def admin_availability_add(request):
 
 @login_required
 def admin_bookings(request):
-    if not request.user.is_staff:
+    if not is_admin_user(request.user):
         messages.error(request, '您没有权限访问此页面')
         return redirect('court_list')
     
@@ -219,7 +228,7 @@ def admin_bookings(request):
 
 @login_required
 def admin_booking_add(request):
-    if not request.user.is_staff:
+    if not is_admin_user(request.user):
         messages.error(request, '您没有权限访问此页面')
         return redirect('court_list')
     

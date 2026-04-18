@@ -665,7 +665,7 @@
                 {% if user.is_authenticated %}
                     <a href="{% url 'court_list' %}">场地列表</a>
                     <a href="{% url 'my_bookings' %}">我的预约</a>
-                    {% if user.is_staff %}
+                    {% if user.profile.user_type == 'admin' %}
                         <a href="{% url 'admin_dashboard' %}">管理后台</a>
                     {% endif %}
                     <a href="{% url 'logout' %}">退出登录</a>

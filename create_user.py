@@ -4,64 +4,55 @@ import django
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-# 设置Django环境
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'stadium_booking.settings')
 django.setup()
 
 from django.contrib.auth.models import User
+from booking.models import Profile
 
 
-class AdminCreatorApp:
+class UserCreatorApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("创建管理员用户")
-        self.root.geometry("480x480")
+        self.root.title("创建用户")
+        self.root.geometry("480x520")
         self.root.resizable(False, False)
-        
-        # 居中显示
+
         self.center_window()
-        
-        # 设置主题颜色
+
         self.primary_color = "#4F46E5"
         self.bg_color = "#F9FAFB"
         self.input_bg = "#FFFFFF"
-        self.border_color = "#D1D5DB"
-        
-        # 设置窗口背景色
+
         self.root.configure(bg=self.bg_color)
-        
+
         self.setup_ui()
-    
+
     def center_window(self):
-        """窗口居中显示"""
         self.root.update_idletasks()
         width = self.root.winfo_width()
         height = self.root.winfo_height()
         x = (self.root.winfo_screenwidth() // 2) - (width // 2)
         y = (self.root.winfo_screenheight() // 2) - (height // 2)
         self.root.geometry(f'{width}x{height}+{x}+{y}')
-    
+
     def setup_ui(self):
-        """设置界面"""
-        # 标题
         title_frame = tk.Frame(self.root, bg=self.primary_color, height=60)
         title_frame.pack(fill="x")
         title_frame.pack_propagate(False)
-        
+
         title_label = tk.Label(
             title_frame,
-            text="🏸 创建管理员用户",
+            text="🏸 创建用户",
             font=("Microsoft YaHei", 16, "bold"),
             fg="white",
             bg=self.primary_color
         )
         title_label.pack(pady=15)
-        
-        # 表单区域
+
         form_frame = tk.Frame(self.root, bg=self.bg_color)
         form_frame.pack(fill="both", expand=True, padx=30, pady=20)
-        
-        # 用户名
+
         tk.Label(
             form_frame,
             text="用户名",
@@ -83,7 +74,6 @@ class AdminCreatorApp:
         )
         self.username_entry.pack(fill="x", ipady=8)
 
-        # 邮箱
         tk.Label(
             form_frame,
             text="邮箱",
@@ -105,7 +95,6 @@ class AdminCreatorApp:
         )
         self.email_entry.pack(fill="x", ipady=8)
 
-        # 密码
         tk.Label(
             form_frame,
             text="密码",
@@ -127,15 +116,61 @@ class AdminCreatorApp:
             show="*"
         )
         self.password_entry.pack(fill="x", ipady=8)
-        
-        # 按钮区域
+
+        tk.Label(
+            form_frame,
+            text="用户类型",
+            font=("Microsoft YaHei", 10),
+            fg="#374151",
+            bg=self.bg_color
+        ).pack(anchor="w", pady=(10, 5))
+
+        self.user_type_var = tk.StringVar(value="regular")
+
+        type_frame = tk.Frame(form_frame, bg=self.bg_color)
+        type_frame.pack(fill="x")
+
+        regular_radio = tk.Radiobutton(
+            type_frame,
+            text="普通用户",
+            variable=self.user_type_var,
+            value="regular",
+            font=("Microsoft YaHei", 10),
+            fg="#374151",
+            bg=self.bg_color,
+            activebackground=self.bg_color,
+            command=self.update_button_text
+        )
+        regular_radio.pack(side="left", padx=(0, 30))
+
+        admin_radio = tk.Radiobutton(
+            type_frame,
+            text="管理员",
+            variable=self.user_type_var,
+            value="admin",
+            font=("Microsoft YaHei", 10),
+            fg="#374151",
+            bg=self.bg_color,
+            activebackground=self.bg_color,
+            command=self.update_button_text
+        )
+        admin_radio.pack(side="left")
+
+        self.type_label = tk.Label(
+            form_frame,
+            text="✓ 可预约场地、查看预约",
+            font=("Microsoft YaHei", 9),
+            fg="#10B981",
+            bg=self.bg_color
+        )
+        self.type_label.pack(anchor="w", pady=(5, 0))
+
         btn_frame = tk.Frame(self.root, bg=self.bg_color)
         btn_frame.pack(fill="x", padx=30, pady=(10, 20))
-        
-        # 创建按钮
+
         self.create_btn = tk.Button(
             btn_frame,
-            text="创建管理员",
+            text="创建普通用户",
             font=("Microsoft YaHei", 11, "bold"),
             fg="white",
             bg=self.primary_color,
@@ -144,11 +179,10 @@ class AdminCreatorApp:
             relief="flat",
             cursor="hand2",
             bd=0,
-            command=self.create_admin
+            command=self.create_user
         )
         self.create_btn.pack(fill="x", ipady=10)
-        
-        # 取消按钮
+
         cancel_btn = tk.Button(
             btn_frame,
             text="取消",
@@ -163,59 +197,74 @@ class AdminCreatorApp:
             command=self.root.destroy
         )
         cancel_btn.pack(fill="x", ipady=8, pady=(10, 0))
-        
-        # 绑定回车键
-        self.root.bind('<Return>', lambda e: self.create_admin())
-        
-        # 默认聚焦用户名输入框
+
+        self.root.bind('<Return>', lambda e: self.create_user())
         self.username_entry.focus()
-    
-    def create_admin(self):
-        """创建管理员"""
+
+    def update_button_text(self):
+        user_type = self.user_type_var.get()
+        if user_type == "admin":
+            self.create_btn.config(text="创建管理员")
+            self.type_label.config(text="✓ 可管理场地、设置时间段、管理预约", fg="#EF4444")
+        else:
+            self.create_btn.config(text="创建普通用户")
+            self.type_label.config(text="✓ 可预约场地、查看预约", fg="#10B981")
+
+    def create_user(self):
         username = self.username_var.get().strip()
         email = self.email_var.get().strip()
         password = self.password_var.get()
-        
-        # 验证输入
+        user_type = self.user_type_var.get()
+
         if not username:
             messagebox.showwarning("提示", "请输入用户名")
             self.username_entry.focus()
             return
-        
+
         if not password:
             messagebox.showwarning("提示", "请输入密码")
             self.password_entry.focus()
             return
-        
+
         if len(password) < 6:
             messagebox.showwarning("提示", "密码长度至少为6位")
             self.password_entry.focus()
             return
-        
+
         try:
-            # 检查用户是否已存在
             if User.objects.filter(username=username).exists():
-                messagebox.showinfo("提示", f"管理员用户 '{username}' 已存在")
+                messagebox.showinfo("提示", f"用户 '{username}' 已存在")
                 return
-            
-            # 创建管理员
-            User.objects.create_superuser(username=username, password=password, email=email)
-            
-            messagebox.showinfo("成功", f"管理员用户创建成功！\n\n用户名: {username}\n密码: {password}")
-            
-            # 清空表单
+
+            user = User.objects.create_user(
+                username=username,
+                password=password,
+                email=email,
+                is_staff=(user_type == "admin")
+            )
+
+            Profile.objects.create(
+                user=user,
+                user_type=user_type
+            )
+
+            type_name = "管理员" if user_type == "admin" else "普通用户"
+            messagebox.showinfo("成功", f"用户创建成功！\n\n用户名: {username}\n用户类型: {type_name}\n密码: {password}")
+
             self.username_var.set("")
             self.email_var.set("")
             self.password_var.set("")
+            self.user_type_var.set("regular")
+            self.update_button_text()
             self.username_entry.focus()
-            
+
         except Exception as e:
             messagebox.showerror("错误", f"创建失败：{str(e)}")
 
 
 def main():
     root = tk.Tk()
-    app = AdminCreatorApp(root)
+    app = UserCreatorApp(root)
     root.mainloop()
 
 

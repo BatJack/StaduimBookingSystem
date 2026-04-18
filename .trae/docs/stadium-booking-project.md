@@ -22,12 +22,13 @@
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                      URL路由 (booking/urls.py)                  │
-│  /                → login_view      # 登录页                    │
-│  /courts/         → court_list     # 场地列表                    │
-│  /api/time-slots/ → get_time_slots # 获取可用时间段 (AJAX)      │
-│  /api/create-booking/ → create_booking_api # 创建预约 (AJAX)    │
-│  /my-bookings/    → my_bookings    # 我的预约                   │
-│  /admin/          → admin_*        # 管理后台相关路由            │
+│  /                    → login_view      # 登录页                │
+│  /logout/             → logout_view    # 退出登录               │
+│  /courts/             → court_list     # 场地列表                │
+│  /api/time-slots/     → get_time_slots # 获取可用时间段 (AJAX)  │
+│  /api/create-booking/ → create_booking_api # 创建预约 (AJAX)     │
+│  /my-bookings/        → my_bookings    # 我的预约                │
+│  /admin/              → admin_*        # 管理后台相关路由        │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -38,16 +39,18 @@
 │  get_time_slots()       # API: 获取时间段 (GET)                │
 │  create_booking_api()   # API: 创建预约 (POST)                 │
 │  my_bookings()          # 我的预约列表                          │
-│  cancel_booking()        # 取消预约                             │
+│  cancel_booking()       # 取消预约                             │
 │  admin_*()              # 管理后台相关函数                      │
+│  is_admin_user()        # 辅助函数：检查用户是否为管理员         │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                      数据模型 (booking/models.py)                 │
-│  Court                 # 场地表                                │
-│  CourtAvailability     # 可预约时间段表 (日期范围+每天时间)       │
-│  Booking               # 预约记录表                            │
+│  Profile                # 用户类型表 (admin/regular)            │
+│  Court                  # 场地表                                │
+│  CourtAvailability      # 可预约时间段表 (日期范围+每天时间)       │
+│  Booking                # 预约记录表                            │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -59,7 +62,7 @@
 StaduimBookingSystem/
 ├── manage.py                     # Django项目管理脚本
 ├── db.sqlite3                    # SQLite数据库文件
-├── create_admin.py               # 创建管理员脚本
+├── create_user.py                # 创建用户脚本 (支持普通用户/管理员)
 ├── README.md                     # 项目说明文档
 ├── .gitignore                    # Git忽略配置
 │
@@ -70,7 +73,7 @@ StaduimBookingSystem/
 │   └── asgi.py                   # ASGI部署配置
 │
 └── booking/                      # 核心应用
-    ├── models.py                 # 数据模型 (Court, CourtAvailability, Booking)
+    ├── models.py                 # 数据模型 (Profile, Court, CourtAvailability, Booking)
     ├── views.py                  # 视图函数 (所有业务逻辑)
     ├── urls.py                   # 应用URL路由
     ├── admin.py                  # Django Admin配置
@@ -94,7 +97,21 @@ StaduimBookingSystem/
 
 ## 数据模型详解
 
-### 1. Court (场地)
+### 1. Profile (用户类型)
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | BigAutoField | 主键 |
+| user | OneToOneField | 关联用户 |
+| user_type | CharField | 用户类型 (admin/regular) |
+| created_at | DateTimeField | 创建时间 |
+| updated_at | DateTimeField | 更新时间 |
+
+**用户类型**：
+- `admin` - 管理员，可访问管理后台
+- `regular` - 普通用户，仅可预约场地
+
+### 2. Court (场地)
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
@@ -106,7 +123,7 @@ StaduimBookingSystem/
 
 **外键关系**：一个场地有多个预约 (`court.bookings`)，一个场地有多个可用时间段 (`court.availabilities`)
 
-### 2. CourtAvailability (可用时间段)
+### 3. CourtAvailability (可用时间段)
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
@@ -121,7 +138,7 @@ StaduimBookingSystem/
 
 **关键方法**：`is_date_available(date)` - 检查指定日期是否在可用范围内
 
-### 3. Booking (预约)
+### 4. Booking (预约)
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
@@ -224,28 +241,48 @@ StaduimBookingSystem/
 
 ### 管理员与普通用户的区分
 
-系统使用 Django 内置的 `User.is_staff` 字段区分管理员和普通用户：
+系统使用 `Profile.user_type` 字段区分管理员和普通用户：
 
-| 用户类型 | `is_staff` | 可访问功能 |
+| 用户类型 | `user_type` | 可访问功能 |
 |---------|------------|-----------|
-| 普通用户 | `False` | 场地列表、我的预约、取消自己的预约 |
-| 管理员 | `True` | 上述功能 + 管理后台全部功能 |
+| 普通用户 | `regular` | 场地列表、我的预约、取消自己的预约 |
+| 管理员 | `admin` | 上述功能 + 管理后台全部功能 |
 
 ### 权限检查逻辑
 
-管理员权限检查示例（[views.py](file:///d:/Workspace/StaduimBookingSystem/booking/views.py)）：
+`is_admin_user()` 辅助函数（[views.py](file:///d:/Workspace/StaduimBookingSystem/booking/views.py)）：
+```python
+def is_admin_user(user):
+    try:
+        return user.profile.user_type == 'admin'
+    except Profile.DoesNotExist:
+        return False
+```
+
+管理员权限检查示例：
 ```python
 @login_required
 def admin_dashboard(request):
-    if not request.user.is_staff:
+    if not is_admin_user(request.user):
         messages.error(request, '您没有权限访问此页面')
         return redirect('court_list')
     ...
 ```
 
+登录后跳转逻辑：
+```python
+def login_view(request):
+    ...
+    if user:
+        login(request, user)
+        if is_admin_user(user):
+            return redirect('admin_dashboard')
+        return redirect('court_list')
+```
+
 导航栏根据用户类型显示不同链接（[base.html](file:///d:/Workspace/StaduimBookingSystem/booking/templates/booking/base.html)）：
 ```html
-{% if user.is_staff %}
+{% if user.profile.user_type == 'admin' %}
     <a href="{% url 'admin_dashboard' %}">管理后台</a>
 {% endif %}
 ```
@@ -341,8 +378,8 @@ python manage.py makemigrations
 # 执行数据库迁移
 python manage.py migrate
 
-# 创建管理员用户
-python create_admin.py
+# 创建用户 (运行GUI工具)
+python create_user.py
 
 # 进入Django shell
 python manage.py shell
@@ -350,10 +387,16 @@ python manage.py shell
 
 ---
 
+## 默认管理员账号
+
+运行 `python create_user.py` 创建用户，选择"管理员"类型即可。
+
+---
+
 ## 注意事项
 
-1. **预约时间规则**：开始和结束时间必须是整点或半点 (如 09:00, 09:30, 10:00)
-2. **数据库变更**：修改 `models.py` 后需要执行 `makemigrations` 和 `migrate`
-3. **Django Admin**：访问 `/admin/` 可管理所有模型数据
+1. **用户类型**：使用 `Profile.user_type` 字段控制管理员/普通用户权限
+2. **预约时间规则**：开始和结束时间必须是整点或半点 (如 09:00, 09:30, 10:00)
+3. **数据库变更**：修改 `models.py` 后需要执行 `makemigrations` 和 `migrate`
 4. **AJAX请求**：前端使用原生JavaScript，无额外框架依赖
-5. **管理员权限**：使用 `is_staff` 字段控制，非 Django Admin 的 `is_superuser`
+5. **Profile自动创建**：新用户通过 `create_user.py` 创建时会自动创建 Profile 记录
