@@ -23,7 +23,7 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                      URL路由 (booking/urls.py)                  │
 │  /                → login_view      # 登录页                    │
-│  /courts/         → court_list     # 场地列表                  │
+│  /courts/         → court_list     # 场地列表                    │
 │  /api/time-slots/ → get_time_slots # 获取可用时间段 (AJAX)      │
 │  /api/create-booking/ → create_booking_api # 创建预约 (AJAX)    │
 │  /my-bookings/    → my_bookings    # 我的预约                   │
@@ -76,7 +76,7 @@ StaduimBookingSystem/
     ├── admin.py                  # Django Admin配置
     │
     └── templates/booking/       # HTML模板
-        ├── base.html              # 基础模板 (全局CSS: ~660行)
+        ├── base.html              # 基础模板 (全局CSS: ~700行)
         ├── login.html             # 登录页
         ├── court_list.html        # 场地列表 (AJAX预约)
         ├── my_bookings.html       # 我的预约
@@ -220,6 +220,38 @@ StaduimBookingSystem/
 
 ---
 
+## 用户权限体系
+
+### 管理员与普通用户的区分
+
+系统使用 Django 内置的 `User.is_staff` 字段区分管理员和普通用户：
+
+| 用户类型 | `is_staff` | 可访问功能 |
+|---------|------------|-----------|
+| 普通用户 | `False` | 场地列表、我的预约、取消自己的预约 |
+| 管理员 | `True` | 上述功能 + 管理后台全部功能 |
+
+### 权限检查逻辑
+
+管理员权限检查示例（[views.py](file:///d:/Workspace/StaduimBookingSystem/booking/views.py)）：
+```python
+@login_required
+def admin_dashboard(request):
+    if not request.user.is_staff:
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    ...
+```
+
+导航栏根据用户类型显示不同链接（[base.html](file:///d:/Workspace/StaduimBookingSystem/booking/templates/booking/base.html)）：
+```html
+{% if user.is_staff %}
+    <a href="{% url 'admin_dashboard' %}">管理后台</a>
+{% endif %}
+```
+
+---
+
 ## 前后端数据流
 
 ### 用户预约流程
@@ -318,16 +350,10 @@ python manage.py shell
 
 ---
 
-## 默认管理员账号
-
-- 用户名: `admin`
-- 密码: `admin123`
-
----
-
 ## 注意事项
 
 1. **预约时间规则**：开始和结束时间必须是整点或半点 (如 09:00, 09:30, 10:00)
 2. **数据库变更**：修改 `models.py` 后需要执行 `makemigrations` 和 `migrate`
 3. **Django Admin**：访问 `/admin/` 可管理所有模型数据
 4. **AJAX请求**：前端使用原生JavaScript，无额外框架依赖
+5. **管理员权限**：使用 `is_staff` 字段控制，非 Django Admin 的 `is_superuser`
