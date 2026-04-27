@@ -1,0 +1,70 @@
+{% extends 'booking/base.html' %}
+
+{% block title %}{% if student %}编辑学员{% else %}添加学员{% endif %} - 体育场馆预约系统{% endblock %}
+
+{% block content %}
+<style>
+    .page-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius);
+        background-color: var(--gray-800);
+        color: white;
+        text-decoration: none;
+        transition: var(--transition);
+        flex-shrink: 0;
+    }
+    .back-btn:hover {
+        background-color: var(--gray-900);
+        transform: translateX(-2px);
+    }
+    .page-header-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: var(--gray-900);
+    }
+</style>
+
+<div class="page-header">
+    <a href="{% url 'admin_student_list' %}" class="back-btn" title="返回学员列表">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+        </svg>
+    </a>
+    <span class="page-header-title">{% if student %}编辑学员{% else %}添加学员{% endif %}</span>
+</div>
+
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="name">学员姓名</label>
+            <input type="text" id="name" name="name" value="{% if student %}{{ student.name }}{% endif %}" placeholder="请输入学员姓名" required>
+        </div>
+        <div class="form-group">
+            <label for="phone">联系电话</label>
+            <input type="text" id="phone" name="phone" value="{% if student %}{{ student.phone }}{% endif %}" placeholder="请输入手机号码" required>
+        </div>
+        <div class="form-group">
+            <label for="total_class_hours">课时总数</label>
+            <input type="number" id="total_class_hours" name="total_class_hours" value="{% if student %}{{ student.total_class_hours }}{% else %}0{% endif %}" min="0" required>
+            <small>30分钟为一课时</small>
+        </div>
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+            <button type="submit" class="btn btn-success">{% if student %}更新{% else %}添加{% endif %}</button>
+            <a href="{% url 'admin_student_list' %}" class="btn btn-outline">取消</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

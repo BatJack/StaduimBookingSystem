@@ -3,50 +3,328 @@
 {% block title %}管理后台 - 体育场馆预约系统{% endblock %}
 
 {% block content %}
-    <div class="page-title">管理后台</div>
+<style>
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+        padding-bottom: 24px;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    .dashboard-header-left h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--gray-900);
+        letter-spacing: -0.02em;
+    }
+    .dashboard-header-left p {
+        font-size: 14px;
+        color: var(--gray-500);
+        margin-top: 4px;
+    }
+    .dashboard-header-right .btn {
+        background-color: var(--gray-800);
+    }
+    .dashboard-header-right .btn:hover {
+        background-color: var(--gray-900);
+    }
 
-    <div class="stat-cards">
-        <div class="stat-card">
-            <div class="stat-card-icon blue">🏸</div>
+    .stat-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+        margin-bottom: 40px;
+    }
+    .stat-card {
+        background: white;
+        border-radius: var(--radius);
+        padding: 24px;
+        border: 1px solid var(--gray-200);
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+    }
+    .stat-card.blue::before { background: var(--info); }
+    .stat-card.green::before { background: var(--success); }
+    .stat-card.orange::before { background: var(--warning); }
+    .stat-card.purple::before { background: #8B5CF6; }
+    .stat-card:hover {
+        border-color: var(--gray-300);
+        box-shadow: var(--shadow-md);
+    }
+    .stat-card-content {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .stat-card-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    }
+    .stat-card-icon.blue {
+        background: var(--info-light);
+        color: var(--info);
+    }
+    .stat-card-icon.green {
+        background: var(--success-light);
+        color: var(--success);
+    }
+    .stat-card-icon.orange {
+        background: var(--warning-light);
+        color: var(--warning);
+    }
+    .stat-card-icon.purple {
+        background: #EDE9FE;
+        color: #8B5CF6;
+    }
+    .stat-card-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--gray-900);
+        line-height: 1;
+    }
+    .stat-card-label {
+        font-size: 13px;
+        color: var(--gray-500);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .section-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--gray-900);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .section-title::before {
+        content: '';
+        width: 4px;
+        height: 18px;
+        background: var(--primary);
+        border-radius: 2px;
+    }
+
+    .management-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 16px;
+    }
+    .management-card {
+        background: white;
+        border-radius: var(--radius);
+        padding: 28px;
+        border: 1px solid var(--gray-200);
+        transition: var(--transition);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    .management-card:hover {
+        border-color: var(--gray-300);
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+    .management-card-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+    .management-card-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: var(--radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+    .management-card-icon.blue {
+        background: var(--info-light);
+        color: var(--info);
+    }
+    .management-card-icon.orange {
+        background: var(--warning-light);
+        color: var(--warning);
+    }
+    .management-card-icon.green {
+        background: var(--success-light);
+        color: var(--success);
+    }
+    .management-card-icon.purple {
+        background: #EDE9FE;
+        color: #8B5CF6;
+    }
+    .management-card-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--gray-900);
+        margin: 0;
+    }
+    .management-card-desc {
+        color: var(--gray-500);
+        font-size: 13px;
+        line-height: 1.6;
+        flex-grow: 1;
+    }
+    .management-card .btn {
+        width: 100%;
+        justify-content: center;
+        padding: 12px 18px;
+        font-weight: 500;
+        background-color: var(--gray-800);
+    }
+    .management-card .btn:hover {
+        background-color: var(--gray-900);
+    }
+</style>
+
+<div class="dashboard-header">
+    <div class="dashboard-header-left">
+        <h1>管理后台</h1>
+        <p>系统概览与功能管理</p>
+    </div>
+    <div class="dashboard-header-right">
+        <a href="{% url 'logout' %}" class="btn">退出登录</a>
+    </div>
+</div>
+
+<div class="stat-cards">
+    <div class="stat-card blue">
+        <div class="stat-card-content">
+            <div class="stat-card-icon blue">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="7" width="20" height="14" rx="2"/>
+                    <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+                    <line x1="12" y1="12" x2="12" y2="16"/>
+                </svg>
+            </div>
             <div class="stat-card-value">{{ courts_count|default:"0" }}</div>
             <div class="stat-card-label">场地总数</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-card-icon green">📅</div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-card-content">
+            <div class="stat-card-icon green">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                    <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>
+                </svg>
+            </div>
             <div class="stat-card-value">{{ bookings_count|default:"0" }}</div>
             <div class="stat-card-label">预约总数</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-card-icon orange">⏰</div>
+    </div>
+    <div class="stat-card orange">
+        <div class="stat-card-content">
+            <div class="stat-card-icon orange">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                </svg>
+            </div>
             <div class="stat-card-value">{{ availabilities_count|default:"0" }}</div>
             <div class="stat-card-label">可用时段</div>
         </div>
     </div>
+</div>
 
-    <div class="grid">
-        <div class="card">
-            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
-                <div class="stat-card-icon blue" style="margin-bottom: 0; width: 40px; height: 40px; font-size: 20px;">🏸</div>
-                <h3 style="margin: 0;">场地管理</h3>
+<div class="section-title">功能管理</div>
+
+<div class="management-grid">
+    <div class="management-card">
+        <div class="management-card-header">
+            <div class="management-card-icon blue">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="7" width="20" height="14" rx="2"/>
+                    <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+                </svg>
             </div>
-            <p style="color: var(--gray-500); font-size: 14px; margin-bottom: 20px;">添加、编辑和删除场地信息</p>
-            <a href="{% url 'admin_court_list' %}" class="btn">管理场地</a>
+            <h3 class="management-card-title">场地管理</h3>
         </div>
-        <div class="card">
-            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
-                <div class="stat-card-icon orange" style="margin-bottom: 0; width: 40px; height: 40px; font-size: 20px;">⏰</div>
-                <h3 style="margin: 0;">可用时间段</h3>
-            </div>
-            <p style="color: var(--gray-500); font-size: 14px; margin-bottom: 20px;">设置场地每天的开放时间</p>
-            <a href="{% url 'admin_availability_list' %}" class="btn">管理时间段</a>
-        </div>
-        <div class="card">
-            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
-                <div class="stat-card-icon green" style="margin-bottom: 0; width: 40px; height: 40px; font-size: 20px;">📋</div>
-                <h3 style="margin: 0;">预约管理</h3>
-            </div>
-            <p style="color: var(--gray-500); font-size: 14px; margin-bottom: 20px;">查看和管理所有预约记录</p>
-            <a href="{% url 'admin_bookings' %}" class="btn">管理预约</a>
-        </div>
+        <p class="management-card-desc">添加、编辑和删除场地信息，管理场地基本属性与状态</p>
+        <a href="{% url 'admin_court_list' %}" class="btn">进入管理</a>
     </div>
+    <div class="management-card">
+        <div class="management-card-header">
+            <div class="management-card-icon orange">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                </svg>
+            </div>
+            <h3 class="management-card-title">可用时段</h3>
+        </div>
+        <p class="management-card-desc">设置场地每天的开放时间，管理可预约时间段配置</p>
+        <a href="{% url 'admin_availability_list' %}" class="btn">进入管理</a>
+    </div>
+    <div class="management-card">
+        <div class="management-card-header">
+            <div class="management-card-icon green">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                </svg>
+            </div>
+            <h3 class="management-card-title">预约管理</h3>
+        </div>
+        <p class="management-card-desc">查看和管理所有预约记录，处理预约状态与异常</p>
+        <a href="{% url 'admin_bookings' %}" class="btn">进入管理</a>
+    </div>
+    <div class="management-card">
+        <div class="management-card-header">
+            <div class="management-card-icon purple">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+            </div>
+            <h3 class="management-card-title">学员管理</h3>
+        </div>
+        <p class="management-card-desc">管理学员信息、联系方式和课时总数</p>
+        <a href="{% url 'admin_student_list' %}" class="btn">进入管理</a>
+    </div>
+    <div class="management-card">
+        <div class="management-card-header">
+            <div class="management-card-icon purple">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                    <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>
+                </svg>
+            </div>
+            <h3 class="management-card-title">课程预约</h3>
+        </div>
+        <p class="management-card-desc">预约课程、添加学员、管理课时扣除与退还</p>
+        <a href="{% url 'admin_course_booking_list' %}" class="btn">进入管理</a>
+    </div>
+</div>
 {% endblock %}

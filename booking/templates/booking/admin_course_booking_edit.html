@@ -1,0 +1,316 @@
+{% extends 'booking/base.html' %}
+
+{% block title %}管理课程预约 - 体育场馆预约系统{% endblock %}
+
+{% block content %}
+<style>
+    .page-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius);
+        background-color: var(--gray-800);
+        color: white;
+        text-decoration: none;
+        transition: var(--transition);
+        flex-shrink: 0;
+    }
+    .back-btn:hover {
+        background-color: var(--gray-900);
+        transform: translateX(-2px);
+    }
+    .page-header-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: var(--gray-900);
+    }
+    .booking-info-card {
+        background: var(--gray-50);
+        border-radius: var(--radius);
+        padding: 20px;
+        margin-bottom: 24px;
+        border: 1px solid var(--gray-200);
+    }
+    .booking-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+    }
+    .booking-info-item label {
+        font-size: 12px;
+        color: var(--gray-500);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: block;
+        margin-bottom: 4px;
+    }
+    .booking-info-item span {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--gray-900);
+    }
+    .student-list-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        background: white;
+        border-radius: var(--radius);
+        border: 1px solid var(--gray-200);
+        margin-bottom: 8px;
+    }
+    .student-list-item:last-child {
+        margin-bottom: 0;
+    }
+    .student-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .student-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--primary-light);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 600;
+    }
+    .student-name {
+        font-weight: 600;
+        color: var(--gray-900);
+        font-size: 14px;
+    }
+    .student-phone {
+        font-size: 12px;
+        color: var(--gray-500);
+    }
+    .student-hours {
+        font-size: 13px;
+        color: var(--primary);
+        font-weight: 600;
+        background: var(--primary-light);
+        padding: 4px 10px;
+        border-radius: 12px;
+    }
+    .add-student-form {
+        background: var(--gray-50);
+        border-radius: var(--radius);
+        padding: 20px;
+        margin-top: 16px;
+        border: 1px solid var(--gray-200);
+    }
+    .add-student-form .form-row {
+        display: flex;
+        gap: 12px;
+        align-items: flex-end;
+    }
+    .add-student-form .form-group {
+        margin-bottom: 0;
+        flex: 1;
+    }
+    .add-student-form .form-group.students-select {
+        flex: 2;
+    }
+    .student-select-list {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid var(--gray-300);
+        border-radius: var(--radius);
+        padding: 8px;
+        background: white;
+    }
+    .student-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+    .student-checkbox:hover {
+        background: var(--gray-50);
+    }
+    .student-checkbox input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--primary);
+    }
+    .student-checkbox label {
+        cursor: pointer;
+        font-size: 14px;
+        color: var(--gray-700);
+        flex: 1;
+    }
+    .student-checkbox .hours-info {
+        font-size: 12px;
+        color: var(--gray-400);
+    }
+    .edit-form-inline {
+        display: flex;
+        gap: 12px;
+        align-items: flex-end;
+        flex-wrap: wrap;
+    }
+    .edit-form-inline .form-group {
+        margin-bottom: 0;
+        flex: 1;
+        min-width: 150px;
+    }
+</style>
+
+<div class="page-header">
+    <a href="{% url 'admin_course_booking_list' %}" class="back-btn" title="返回预约列表">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+        </svg>
+    </a>
+    <span class="page-header-title">管理课程预约</span>
+</div>
+
+<div class="booking-info-card">
+    <div class="booking-info-grid">
+        <div class="booking-info-item">
+            <label>场地</label>
+            <span>{{ booking.court.name }}</span>
+        </div>
+        <div class="booking-info-item">
+            <label>日期</label>
+            <span>{{ booking.date|date:"Y-m-d" }}</span>
+        </div>
+        <div class="booking-info-item">
+            <label>时间</label>
+            <span>{{ booking.start_time|time:"H:i" }} - {{ booking.end_time|time:"H:i" }}</span>
+        </div>
+        <div class="booking-info-item">
+            <label>学员人数</label>
+            <span>{{ booking_students|length }} 人</span>
+        </div>
+        <div class="booking-info-item">
+            <label>状态</label>
+            <span>
+                {% if booking.status == 'active' %}
+                    <span class="badge badge-success">有效</span>
+                {% else %}
+                    <span class="badge badge-danger">已取消</span>
+                {% endif %}
+            </span>
+        </div>
+    </div>
+</div>
+
+{% if booking.status == 'active' %}
+<div class="card">
+    <h3 style="margin-bottom: 16px;">编辑预约信息</h3>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update_booking">
+        <div class="edit-form-inline">
+            <div class="form-group">
+                <label for="date">日期</label>
+                <input type="date" id="date" name="date" value="{{ booking.date|date:'Y-m-d' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="start_time">开始时间</label>
+                <input type="time" id="start_time" name="start_time" value="{{ booking.start_time|time:'H:i' }}" step="1800" required>
+            </div>
+            <div class="form-group">
+                <label for="end_time">结束时间</label>
+                <input type="time" id="end_time" name="end_time" value="{{ booking.end_time|time:'H:i' }}" step="1800" required>
+            </div>
+            <button type="submit" class="btn btn-sm">保存修改</button>
+        </div>
+    </form>
+</div>
+{% endif %}
+
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="margin: 0;">学员名单</h3>
+    </div>
+
+    {% if booking_students %}
+        {% for cs in booking_students %}
+            <div class="student-list-item">
+                <div class="student-info">
+                    <div class="student-avatar">{{ cs.student.name|slice:":1" }}</div>
+                    <div>
+                        <div class="student-name">{{ cs.student.name }}</div>
+                        <div class="student-phone">{{ cs.student.phone }}</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span class="student-hours">{{ cs.class_hours }} 课时</span>
+                    {% if booking.status == 'active' %}
+                        <form method="post" style="display: inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="remove_student">
+                            <input type="hidden" name="cs_id" value="{{ cs.id }}">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确定要移除学员 {{ cs.student.name }} 吗？将退还 {{ cs.class_hours }} 课时')">移除</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p style="color: var(--gray-500); font-size: 14px; text-align: center; padding: 20px;">暂无学员，请在下方添加</p>
+    {% endif %}
+
+    {% if booking.status == 'active' %}
+        <div class="add-student-form">
+            <h4 style="margin: 0 0 16px 0; font-size: 15px; color: var(--gray-700);">添加学员</h4>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_students">
+                <div class="form-row">
+                    <div class="form-group students-select">
+                        <label>选择学员</label>
+                        <div class="student-select-list">
+                            {% for s in students %}
+                                {% if s.total_class_hours > 0 %}
+                                    <div class="student-checkbox">
+                                        <input type="checkbox" name="students" value="{{ s.id }}" id="student_{{ s.id }}">
+                                        <label for="student_{{ s.id }}">{{ s.name }}</label>
+                                        <span class="hours-info">{{ s.total_class_hours }}课时</span>
+                                    </div>
+                                {% endif %}
+                            {% empty %}
+                                <p style="color: var(--gray-400); font-size: 13px; text-align: center; padding: 12px;">暂无可用学员</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="form-group" style="flex: 0 0 120px;">
+                        <label for="class_hours">课时数</label>
+                        <input type="number" id="class_hours" name="class_hours" value="1" min="1" required>
+                    </div>
+                    <button type="submit" class="btn btn-success" style="flex: 0 0 auto;">添加</button>
+                </div>
+            </form>
+        </div>
+    {% endif %}
+</div>
+
+{% if booking.status == 'active' %}
+<div style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="cancel_booking">
+        <button type="submit" class="btn btn-danger" onclick="return confirm('确定要取消此课程预约吗？所有学员课时将退还')">取消课程预约</button>
+    </form>
+</div>
+{% endif %}
+{% endblock %}

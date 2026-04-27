@@ -1,0 +1,139 @@
+{% extends 'booking/base.html' %}
+
+{% block title %}新增课程预约 - 体育场馆预约系统{% endblock %}
+
+{% block content %}
+<style>
+    .page-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius);
+        background-color: var(--gray-800);
+        color: white;
+        text-decoration: none;
+        transition: var(--transition);
+        flex-shrink: 0;
+    }
+    .back-btn:hover {
+        background-color: var(--gray-900);
+        transform: translateX(-2px);
+    }
+    .page-header-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: var(--gray-900);
+    }
+    .step-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 24px;
+        padding: 16px 20px;
+        background: var(--gray-50);
+        border-radius: var(--radius);
+        border: 1px solid var(--gray-200);
+    }
+    .step {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: var(--gray-400);
+    }
+    .step.active {
+        color: var(--primary);
+        font-weight: 600;
+    }
+    .step-num {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 600;
+        background: var(--gray-200);
+        color: var(--gray-500);
+    }
+    .step.active .step-num {
+        background: var(--primary);
+        color: white;
+    }
+    .step-arrow {
+        color: var(--gray-300);
+        font-size: 18px;
+    }
+</style>
+
+<div class="page-header">
+    <a href="{% url 'admin_course_booking_list' %}" class="back-btn" title="返回预约列表">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+        </svg>
+    </a>
+    <span class="page-header-title">新增课程预约</span>
+</div>
+
+<div class="step-indicator">
+    <div class="step active">
+        <span class="step-num">1</span>
+        <span>选择场地和时间</span>
+    </div>
+    <span class="step-arrow">→</span>
+    <div class="step">
+        <span class="step-num">2</span>
+        <span>添加学员</span>
+    </div>
+    <span class="step-arrow">→</span>
+    <div class="step">
+        <span class="step-num">3</span>
+        <span>确认预约</span>
+    </div>
+</div>
+
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_booking">
+        <div class="form-group">
+            <label for="court">选择场地</label>
+            <select id="court" name="court" required>
+                <option value="">请选择场地</option>
+                {% for court in courts %}
+                    <option value="{{ court.id }}">{{ court.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="date">预约日期</label>
+            <input type="date" id="date" name="date" required>
+        </div>
+        <div class="form-group">
+            <label for="start_time">开始时间</label>
+            <input type="time" id="start_time" name="start_time" step="1800" required>
+            <small>时间必须是整点或半点</small>
+        </div>
+        <div class="form-group">
+            <label for="end_time">结束时间</label>
+            <input type="time" id="end_time" name="end_time" step="1800" required>
+            <small>时间必须是整点或半点</small>
+        </div>
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+            <button type="submit" class="btn btn-success">下一步：添加学员</button>
+            <a href="{% url 'admin_course_booking_list' %}" class="btn btn-outline">取消</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
