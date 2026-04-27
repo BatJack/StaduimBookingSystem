@@ -13,9 +13,9 @@
         <input type="date" id="booking-date" min="{{ today|date:'Y-m-d' }}" value="{{ today|date:'Y-m-d' }}">
     </div>
 
-    <div id="time-slots-container">
+    <div id="booking-matrix-container">
         <div class="no-availability">
-            <p>📅 请选择日期查看可用时间段</p>
+            <p>📅 请选择日期查看可用场地</p>
         </div>
     </div>
 
@@ -44,104 +44,123 @@
     </div>
 
     <style>
-        .court-section {
+        .date-selector select {
+            padding: 10px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .date-selector select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+        .matrix-wrapper {
             background: white;
             border-radius: 16px;
             padding: 24px;
             margin-bottom: 24px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             border: 1px solid #e5e7eb;
+            overflow-x: auto;
         }
-        .court-title {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-            padding-bottom: 16px;
-            border-bottom: 2px solid #f3f4f6;
+        .matrix-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: 600px;
         }
-        .court-title h3 {
-            color: #1f2937;
-            font-size: 20px;
-            font-weight: 600;
-            margin: 0;
-        }
-        .time-grid-wrapper {
-            margin-top: 16px;
-        }
-        .time-period {
-            margin-bottom: 20px;
-        }
-        .time-period:last-child {
-            margin-bottom: 0;
-        }
-        .time-period-label {
-            font-size: 13px;
-            font-weight: 600;
-            color: #6b7280;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        .time-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-            gap: 8px;
-        }
-        .time-slot {
-            padding: 14px 8px;
+        .matrix-table th,
+        .matrix-table td {
+            padding: 12px 8px;
             text-align: center;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 500;
+            border: 1px solid #e5e7eb;
+        }
+        .matrix-table thead th {
+            background: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .matrix-table thead th:first-child {
+            background: #f3f4f6;
+            width: 100px;
+            position: sticky;
+            left: 0;
+            z-index: 11;
+        }
+        .matrix-table tbody td:first-child {
+            background: #f3f4f6;
+            font-weight: 600;
+            color: #4b5563;
+            position: sticky;
+            left: 0;
+            z-index: 1;
+        }
+        .time-cell {
+            padding: 8px 4px;
             cursor: pointer;
             transition: all 0.2s ease;
-            border: 2px solid transparent;
-            font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+            border-radius: 4px;
+            font-size: 13px;
+            min-width: 70px;
         }
-        .time-slot .time-label {
-            font-size: 15px;
-            font-weight: 600;
-            display: block;
-        }
-        .time-slot .time-status {
-            font-size: 11px;
-            margin-top: 4px;
-            opacity: 0.8;
-        }
-        .time-slot.available {
+        .time-cell.available {
             background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
             color: #065f46;
-            border-color: #6ee7b7;
+            border: 1px solid #6ee7b7;
         }
-        .time-slot.available:hover {
+        .time-cell.available:hover {
             background: linear-gradient(135deg, #a7f3d0 0%, #6ee7b7 100%);
-            border-color: #34d399;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
         }
-        .time-slot.booked {
+        .time-cell.booked {
             background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
             color: #991b1b;
-            border-color: #fca5a5;
+            border: 1px solid #fca5a5;
             cursor: not-allowed;
         }
-        .time-slot.booked:hover {
+        .time-cell.booked:hover {
             transform: none;
             box-shadow: none;
         }
-        .time-slot.selected {
+        .time-cell.selected {
             background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
             color: white;
-            border-color: #4338ca;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4);
+            border: 1px solid #4338ca;
+            transform: scale(1.08);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
         }
-        .time-slot.selected:hover {
+        .time-cell.selected:hover {
             background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
         }
-        .time-slot.selected .time-status {
-            opacity: 0.9;
+        .time-cell.no-court {
+            background: #f3f4f6;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+        .time-cell .slot-label {
+            font-weight: 600;
+            display: block;
+        }
+        .time-cell .slot-status {
+            font-size: 10px;
+            margin-top: 2px;
+            opacity: 0.8;
+        }
+        .court-header {
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        .time-header {
+            font-size: 12px;
+            color: #6b7280;
         }
         .no-availability {
             text-align: center;
@@ -248,12 +267,28 @@
             background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
             border: 2px solid #4338ca;
         }
+        .info-banner {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #fcd34d;
+            font-size: 14px;
+            color: #92400e;
+        }
+        .info-banner .icon {
+            font-size: 20px;
+        }
     </style>
 
     <script>
         let selectedSlots = [];
         let selectedCourtId = null;
         let currentDate = null;
+        let courtsData = [];
 
         function formatDate(dateStr) {
             const date = new Date(dateStr);
@@ -263,103 +298,128 @@
             return `${year}年${month}月${day}日`;
         }
 
-        function getTimePeriod(timeStr) {
-            const hour = parseInt(timeStr.split(':')[0]);
-            if (hour >= 6 && hour < 12) return '上午';
-            if (hour >= 12 && hour < 18) return '下午';
-            return '晚上';
-        }
-
         function loadTimeSlots() {
             const dateInput = document.getElementById('booking-date');
             const selectedDate = dateInput.value;
-            
+
             if (!selectedDate) return;
-            
+
             currentDate = selectedDate;
             selectedSlots = [];
             selectedCourtId = null;
             updateBookingSummary();
-            
-            fetch(`{% url 'get_time_slots' %}?date=${selectedDate}`)
+
+            const url = `{% url 'get_time_slots' %}?date=${selectedDate}`;
+
+            fetch(url)
                 .then(response => response.json())
                 .then(data => {
-                    renderTimeSlots(data.courts);
+                    courtsData = data.courts || [];
+                    renderMatrix(courtsData);
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    document.getElementById('time-slots-container').innerHTML = 
+                    document.getElementById('booking-matrix-container').innerHTML = 
                         '<div class="no-availability"><div class="icon">❌</div><p>加载失败，请重试</p></div>';
                 });
         }
 
-        function renderTimeSlots(courts) {
-            const container = document.getElementById('time-slots-container');
+        function renderMatrix(courts) {
+            const container = document.getElementById('booking-matrix-container');
             
             if (courts.length === 0) {
                 container.innerHTML = '<div class="no-availability"><div class="icon">🏟️</div><p>暂无场地</p></div>';
                 return;
             }
 
-            let html = '';
-            courts.forEach(court => {
-                html += `<div class="court-section">`;
-                html += `<div class="court-title"><h3>🏟️ ${court.name}</h3></div>`;
-                
-                if (!court.is_available) {
-                    html += `<div class="no-availability"><div class="icon">📅</div><p>该日期未开放预约</p></div>`;
-                } else if (court.time_slots.length === 0) {
-                    html += `<div class="no-availability"><div class="icon">⏰</div><p>暂无可用时间段</p></div>`;
-                } else {
-                    html += `<div class="time-info" style="margin-bottom: 16px; padding: 12px 16px; background: #f9fafb; border-radius: 10px; font-size: 14px; color: #4b5563;">
-                        <strong>开放时间：</strong>${court.start_time} - ${court.end_time}
-                    </div>`;
-                    
-                    const groupedSlots = {};
-                    court.time_slots.forEach(slot => {
-                        const period = getTimePeriod(slot.start);
-                        if (!groupedSlots[period]) {
-                            groupedSlots[period] = [];
-                        }
-                        groupedSlots[period].push(slot);
-                    });
+            const availableCourts = courts.filter(c => c.is_available);
+            if (availableCourts.length === 0) {
+                container.innerHTML = '<div class="no-availability"><div class="icon">📅</div><p>该日期暂无开放的场地</p></div>';
+                return;
+            }
 
-                    html += `<div class="time-grid-wrapper">`;
-                    for (const [period, slots] of Object.entries(groupedSlots)) {
-                        html += `<div class="time-period">`;
-                        html += `<div class="time-period-label">${period}</div>`;
-                        html += `<div class="time-grid" data-court-id="${court.id}">`;
-                        
-                        slots.forEach(slot => {
-                            const statusClass = slot.is_booked ? 'booked' : 'available';
-                            html += `<div class="time-slot ${statusClass}" 
-                                        data-court-id="${court.id}"
-                                        data-start="${slot.start}" 
-                                        data-end="${slot.end}"
-                                        data-booked="${slot.is_booked}"
-                                        onclick="toggleSlot(this)">
-                                        <span class="time-label">${slot.start}</span>
-                                        <span class="time-status">${slot.is_booked ? '已满' : '可预约'}</span>
-                                    </div>`;
-                        });
-                        
-                        html += `</div></div>`;
-                    }
-                    html += `</div>`;
-                }
-                
-                html += `</div>`;
-            });
+            const allTimeSlots = [];
+            const timeSet = new Set();
             
+            availableCourts.forEach(court => {
+                if (court.time_slots && court.time_slots.length > 0) {
+                    court.time_slots.forEach(slot => {
+                        const key = `${slot.start}-${slot.end}`;
+                        if (!timeSet.has(key)) {
+                            timeSet.add(key);
+                            allTimeSlots.push({
+                                start: slot.start,
+                                end: slot.end,
+                                sortKey: slot.start.replace(':', '')
+                            });
+                        }
+                    });
+                }
+            });
+
+            allTimeSlots.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+
+            if (allTimeSlots.length === 0) {
+                container.innerHTML = '<div class="no-availability"><div class="icon">⏰</div><p>暂无可用时间段</p></div>';
+                return;
+            }
+
+            let html = `<div class="info-banner">
+                <span class="icon">📅</span>
+                <span>点击方格可选择时间段，同时选择同一场地（列）的连续时间段即可预约</span>
+            </div>`;
+
+            html += '<div class="matrix-wrapper">';
+            html += '<table class="matrix-table">';
+            
+            html += '<thead><tr>';
+            html += '<th class="time-header">时间</th>';
+            availableCourts.forEach(court => {
+                html += `<th class="court-header">${court.name}</th>`;
+            });
+            html += '</tr></thead>';
+
+            html += '<tbody>';
+            allTimeSlots.forEach(slot => {
+                html += '<tr>';
+                html += `<td>${slot.start}<br><span style="font-size:11px;color:#9ca3af">${slot.end}</span></td>`;
+                
+                availableCourts.forEach(court => {
+                    const courtSlot = court.time_slots.find(s => s.start === slot.start && s.end === slot.end);
+                    const isBooked = courtSlot ? courtSlot.is_booked : true;
+                    const statusClass = isBooked ? 'booked' : 'available';
+                    const statusText = isBooked ? '已满' : '可预约';
+                    
+                    if (!court.is_available) {
+                        html += `<td><div class="time-cell no-court"><span class="slot-label">-</span></div></td>`;
+                    } else {
+                        html += `<td><div class="time-cell ${statusClass}" 
+                            data-court-id="${court.id}"
+                            data-court-name="${court.name}"
+                            data-start="${slot.start}" 
+                            data-end="${slot.end}"
+                            data-booked="${isBooked}"
+                            onclick="toggleSlot(this)">
+                            <span class="slot-label">${slot.start}</span>
+                            <span class="slot-status">${statusText}</span>
+                        </div></td>`;
+                    }
+                });
+                
+                html += '</tr>';
+            });
+            html += '</tbody></table></div>';
+
             container.innerHTML = html;
         }
 
         function toggleSlot(element) {
-            if (element.classList.contains('booked')) {
+            if (element.classList.contains('booked') || element.classList.contains('no-court')) {
                 return;
             }
 
             const courtId = element.dataset.courtId;
+            const courtName = element.dataset.courtName;
             const start = element.dataset.start;
             const end = element.dataset.end;
             const slotKey = `${courtId}-${start}-${end}`;
@@ -372,7 +432,7 @@
             if (element.classList.contains('selected')) {
                 element.classList.remove('selected');
                 element.classList.add('available');
-                element.querySelector('.time-status').textContent = '可预约';
+                element.querySelector('.slot-status').textContent = '可预约';
                 selectedSlots = selectedSlots.filter(s => s.key !== slotKey);
                 
                 if (selectedSlots.length === 0) {
@@ -381,10 +441,11 @@
             } else {
                 element.classList.remove('available');
                 element.classList.add('selected');
-                element.querySelector('.time-status').textContent = '已选择';
+                element.querySelector('.slot-status').textContent = '已选择';
                 selectedSlots.push({
                     key: slotKey,
                     courtId: courtId,
+                    courtName: courtName,
                     start: start,
                     end: end
                 });
@@ -408,6 +469,7 @@
             const sortedSlots = [...selectedSlots].sort((a, b) => a.start.localeCompare(b.start));
             const startTime = sortedSlots[0].start;
             const lastSlot = sortedSlots[sortedSlots.length - 1];
+            const courtName = sortedSlots[0].courtName;
             
             let totalMinutes = 0;
             sortedSlots.forEach(slot => {
@@ -422,14 +484,14 @@
             if (hours > 0) duration += `${hours}小时`;
             if (minutes > 0) duration += `${minutes}分钟`;
 
-            info.innerHTML = `已选择 <strong>${formatDate(currentDate)}</strong>，时间：<strong>${startTime} - ${lastSlot.end}</strong>，共 <strong>${duration}</strong>`;
+            info.innerHTML = `已选择 <strong>${courtName}</strong>，日期：<strong>${formatDate(currentDate)}</strong>，时间：<strong>${startTime} - ${lastSlot.end}</strong>，共 <strong>${duration}</strong>`;
         }
 
         function cancelSelection() {
-            document.querySelectorAll('.time-slot.selected').forEach(el => {
+            document.querySelectorAll('.time-cell.selected').forEach(el => {
                 el.classList.remove('selected');
                 el.classList.add('available');
-                el.querySelector('.time-status').textContent = '可预约';
+                el.querySelector('.slot-status').textContent = '可预约';
             });
             selectedSlots = [];
             selectedCourtId = null;
@@ -500,7 +562,7 @@
         }
 
         document.getElementById('booking-date').addEventListener('change', loadTimeSlots);
-        
+
         loadTimeSlots();
     </script>
 {% endblock %}

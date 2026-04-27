@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST, require_GET
 from datetime import datetime, timedelta, time
-from .models import Court, CourtAvailability, Booking, Profile
+from .models import Court, CourtAvailability, Booking, Profile, Student, CourseBooking, CourseBookingStudent
 
 
 def is_admin_user(user):
@@ -326,15 +326,19 @@ def admin_booking_add(request):
 @require_GET
 def get_time_slots(request):
     date_str = request.GET.get('date')
+    court_id = request.GET.get('court_id')
+
     if not date_str:
         return JsonResponse({'error': '缺少日期参数'}, status=400)
-    
+
     try:
         selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
     except ValueError:
         return JsonResponse({'error': '日期格式错误'}, status=400)
-    
+
     courts = Court.objects.all()
+    if court_id:
+        courts = courts.filter(id=court_id)
     data = []
     
     for court in courts:
@@ -455,3 +459,379 @@ def create_booking_api(request):
     )
     
     return JsonResponse({'success': True, 'message': '预约成功'})
+
+
+@login_required
+def admin_student_list(request):
+    if not is_admin_user(request.user):
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    students = Student.objects.all().order_by('name')
+    return render(request, 'booking/admin_student_list.html', {'students': students})
+
+
+@login_required
+def admin_student_add(request):
+    if not is_admin_user(request.user):
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        phone = request.POST.get('phone')
+        total_class_hours = int(request.POST.get('total_class_hours', 0))
+        
+        Student.objects.create(name=name, phone=phone, total_class_hours=total_class_hours)
+        messages.success(request, '学员添加成功')
+        return redirect('admin_student_list')
+    
+    return render(request, 'booking/admin_student_form.html')
+
+
+@login_required
+def admin_student_edit(request, student_id):
+    if not is_admin_user(request.user):
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    student = get_object_or_404(Student, id=student_id)
+    
+    if request.method == 'POST':
+        student.name = request.POST.get('name')
+        student.phone = request.POST.get('phone')
+        student.total_class_hours = int(request.POST.get('total_class_hours', 0))
+        student.save()
+        messages.success(request, '学员信息更新成功')
+        return redirect('admin_student_list')
+    
+    return render(request, 'booking/admin_student_form.html', {'student': student})
+
+
+@login_required
+def admin_student_delete(request, student_id):
+    if not is_admin_user(request.user):
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    student = get_object_or_404(Student, id=student_id)
+    student.delete()
+    messages.success(request, '学员删除成功')
+    return redirect('admin_student_list')
+
+
+@login_required
+def admin_course_booking_list(request):
+    if not is_admin_user(request.user):
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    today = timezone.now().date()
+    bookings = CourseBooking.objects.all().select_related('court').order_by('-date', 'start_time')
+    return render(request, 'booking/admin_course_booking_list.html', {
+        'bookings': bookings,
+        'today': today,
+    })
+
+
+@login_required
+def admin_course_booking_add(request):
+    if not is_admin_user(request.user):
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'create_booking':
+            court_id = request.POST.get('court')
+            date_str = request.POST.get('date')
+            start_time_str = request.POST.get('start_time')
+            end_time_str = request.POST.get('end_time')
+            
+            try:
+                court = Court.objects.get(id=court_id)
+                booking_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                start_time = datetime.strptime(start_time_str, '%H:%M').time()
+                end_time = datetime.strptime(end_time_str, '%H:%M').time()
+                
+                if start_time >= end_time:
+                    messages.error(request, '结束时间必须大于开始时间')
+                    return render(request, 'booking/admin_course_booking_form.html', {
+                        'courts': Court.objects.all(),
+                        'students': Student.objects.all(),
+                    })
+                
+                if start_time.minute not in [0, 30] or end_time.minute not in [0, 30]:
+                    messages.error(request, '时间必须是整点或半点')
+                    return render(request, 'booking/admin_course_booking_form.html', {
+                        'courts': Court.objects.all(),
+                        'students': Student.objects.all(),
+                    })
+                
+                availability = CourtAvailability.objects.filter(
+                    court=court,
+                    start_date__lte=booking_date,
+                    end_date__gte=booking_date
+                ).first()
+                
+                if not availability:
+                    messages.error(request, '该日期场地未开放')
+                    return render(request, 'booking/admin_course_booking_form.html', {
+                        'courts': Court.objects.all(),
+                        'students': Student.objects.all(),
+                    })
+                
+                if start_time < availability.start_time or end_time > availability.end_time:
+                    messages.error(request, '预约时间不在场地开放时间内')
+                    return render(request, 'booking/admin_course_booking_form.html', {
+                        'courts': Court.objects.all(),
+                        'students': Student.objects.all(),
+                    })
+                
+                conflicting = CourseBooking.objects.filter(
+                    court=court,
+                    date=booking_date,
+                    status='active'
+                ).exclude(
+                    end_time__lte=start_time
+                ).exclude(
+                    start_time__gte=end_time
+                )
+                
+                if conflicting.exists():
+                    messages.error(request, '该时间段已有课程预约')
+                    return render(request, 'booking/admin_course_booking_form.html', {
+                        'courts': Court.objects.all(),
+                        'students': Student.objects.all(),
+                    })
+                
+                booking = CourseBooking.objects.create(
+                    court=court,
+                    date=booking_date,
+                    start_time=start_time,
+                    end_time=end_time,
+                    status='active'
+                )
+                
+                messages.success(request, '课程预约已创建，请添加学员')
+                return redirect('admin_course_booking_edit', booking_id=booking.id)
+                
+            except Court.DoesNotExist:
+                messages.error(request, '场地不存在')
+            except ValueError:
+                messages.error(request, '时间格式错误')
+        
+        elif action == 'add_students':
+            booking_id = request.POST.get('booking_id')
+            booking = get_object_or_404(CourseBooking, id=booking_id)
+            
+            student_ids = request.POST.getlist('students')
+            class_hours = request.POST.get('class_hours')
+            
+            if not student_ids:
+                messages.error(request, '请至少选择一名学员')
+                return render(request, 'booking/admin_course_booking_edit.html', {
+                    'booking': booking,
+                    'students': Student.objects.all(),
+                })
+            
+            try:
+                hours = int(class_hours)
+                if hours <= 0:
+                    messages.error(request, '课时数必须大于0')
+                    return render(request, 'booking/admin_course_booking_edit.html', {
+                        'booking': booking,
+                        'students': Student.objects.all(),
+                    })
+            except (ValueError, TypeError):
+                messages.error(request, '课时数格式错误')
+                return render(request, 'booking/admin_course_booking_edit.html', {
+                    'booking': booking,
+                    'students': Student.objects.all(),
+                })
+            
+            added = 0
+            for sid in student_ids:
+                try:
+                    student = Student.objects.get(id=sid)
+                    
+                    if booking.students.filter(student=student).exists():
+                        messages.warning(request, f'学员 {student.name} 已在课程中')
+                        continue
+                    
+                    if student.total_class_hours < hours:
+                        messages.warning(request, f'学员 {student.name} 课时不足（当前{student.total_class_hours}课时）')
+                        continue
+                    
+                    student.total_class_hours -= hours
+                    student.save()
+                    
+                    CourseBookingStudent.objects.create(
+                        booking=booking,
+                        student=student,
+                        class_hours=hours
+                    )
+                    added += 1
+                except Student.DoesNotExist:
+                    pass
+            
+            if added > 0:
+                messages.success(request, f'成功添加 {added} 名学员，已扣除课时')
+            return redirect('admin_course_booking_edit', booking_id=booking_id)
+    
+    return render(request, 'booking/admin_course_booking_form.html', {
+        'courts': Court.objects.all(),
+        'students': Student.objects.all(),
+    })
+
+
+@login_required
+def admin_course_booking_edit(request, booking_id):
+    if not is_admin_user(request.user):
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    booking = get_object_or_404(CourseBooking, id=booking_id)
+    booking_students = booking.students.select_related('student').all()
+    all_students = Student.objects.all()
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'remove_student':
+            cs_id = request.POST.get('cs_id')
+            try:
+                cs = CourseBookingStudent.objects.get(id=cs_id, booking=booking)
+                student = cs.student
+                hours = cs.class_hours
+                
+                student.total_class_hours += hours
+                student.save()
+                
+                cs.delete()
+                messages.success(request, f'已移除学员 {student.name}，退还 {hours} 课时')
+            except CourseBookingStudent.DoesNotExist:
+                messages.error(request, '操作失败')
+        
+        elif action == 'add_students':
+            student_ids = request.POST.getlist('students')
+            class_hours = request.POST.get('class_hours')
+            
+            if not student_ids:
+                messages.error(request, '请至少选择一名学员')
+                return render(request, 'booking/admin_course_booking_edit.html', {
+                    'booking': booking,
+                    'booking_students': booking_students,
+                    'students': all_students,
+                })
+            
+            try:
+                hours = int(class_hours)
+                if hours <= 0:
+                    messages.error(request, '课时数必须大于0')
+                    return render(request, 'booking/admin_course_booking_edit.html', {
+                        'booking': booking,
+                        'booking_students': booking_students,
+                        'students': all_students,
+                    })
+            except (ValueError, TypeError):
+                messages.error(request, '课时数格式错误')
+                return render(request, 'booking/admin_course_booking_edit.html', {
+                    'booking': booking,
+                    'booking_students': booking_students,
+                    'students': all_students,
+                })
+            
+            added = 0
+            for sid in student_ids:
+                try:
+                    student = Student.objects.get(id=sid)
+                    
+                    if booking.students.filter(student=student).exists():
+                        messages.warning(request, f'学员 {student.name} 已在课程中')
+                        continue
+                    
+                    if student.total_class_hours < hours:
+                        messages.warning(request, f'学员 {student.name} 课时不足（当前{student.total_class_hours}课时）')
+                        continue
+                    
+                    student.total_class_hours -= hours
+                    student.save()
+                    
+                    CourseBookingStudent.objects.create(
+                        booking=booking,
+                        student=student,
+                        class_hours=hours
+                    )
+                    added += 1
+                except Student.DoesNotExist:
+                    pass
+            
+            if added > 0:
+                messages.success(request, f'成功添加 {added} 名学员，已扣除课时')
+            return redirect('admin_course_booking_edit', booking_id=booking_id)
+        
+        elif action == 'cancel_booking':
+            if booking.status == 'active':
+                for cs in booking.students.all():
+                    cs.student.total_class_hours += cs.class_hours
+                    cs.student.save()
+                    cs.delete()
+                booking.status = 'cancelled'
+                booking.save()
+                messages.success(request, '课程预约已取消，所有学员课时已退还')
+            return redirect('admin_course_booking_list')
+        
+        elif action == 'update_booking':
+            date_str = request.POST.get('date')
+            start_time_str = request.POST.get('start_time')
+            end_time_str = request.POST.get('end_time')
+            
+            try:
+                booking_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                start_time = datetime.strptime(start_time_str, '%H:%M').time()
+                end_time = datetime.strptime(end_time_str, '%H:%M').time()
+                
+                if start_time >= end_time:
+                    messages.error(request, '结束时间必须大于开始时间')
+                    return render(request, 'booking/admin_course_booking_edit.html', {
+                        'booking': booking,
+                        'booking_students': booking_students,
+                        'students': all_students,
+                    })
+                
+                booking.date = booking_date
+                booking.start_time = start_time
+                booking.end_time = end_time
+                booking.save()
+                messages.success(request, '课程预约信息已更新')
+            except ValueError:
+                messages.error(request, '时间格式错误')
+            
+            return redirect('admin_course_booking_edit', booking_id=booking_id)
+    
+    return render(request, 'booking/admin_course_booking_edit.html', {
+        'booking': booking,
+        'booking_students': booking_students,
+        'students': all_students,
+    })
+
+
+@login_required
+def admin_course_booking_delete(request, booking_id):
+    if not is_admin_user(request.user):
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    booking = get_object_or_404(CourseBooking, id=booking_id)
+    
+    if booking.status == 'active':
+        for cs in booking.students.all():
+            cs.student.total_class_hours += cs.class_hours
+            cs.student.save()
+            cs.delete()
+    
+    booking.delete()
+    messages.success(request, '课程预约已删除')
+    return redirect('admin_course_booking_list')

@@ -1,6 +1,6 @@
 ---
 name: "stadium-booking-context"
-description: "Provides project structure and UI editing guidelines for Stadium Booking System. Invoke BEFORE modifying any code to understand project architecture."
+description: "Provides project structure, URL routing rules, and UI editing guidelines for Stadium Booking System. Invoke BEFORE modifying any code to understand project architecture and avoid URL conflicts."
 ---
 
 # Stadium Booking System Context
@@ -14,6 +14,7 @@ This skill provides essential context about the Stadium Booking System project s
 - Adding new features
 - Refactoring code
 - Making structural changes to the project
+- Changing URL routing
 
 ## Project Overview
 
@@ -29,6 +30,23 @@ This is a Django-based badminton court booking system.
 | `booking/urls.py` | URL routing |
 | `stadium_booking/` | Project settings |
 
+## URL Routing Rules
+
+**CRITICAL: URL Conflict Resolution**
+
+The project has TWO admin systems that must NOT conflict:
+
+| System | Path Prefix | Description |
+|--------|-------------|-------------|
+| Django Admin | `/admin/` | Django's built-in admin (for database management) |
+| Custom Admin | `/manage/` | Custom management pages (main admin interface) |
+
+**IMPORTANT RULES:**
+1. NEVER use `admin/` as a path prefix in `booking/urls.py` - it will conflict with Django Admin
+2. ALWAYS use `manage/` as the path prefix for custom admin pages
+3. When adding new admin features, use paths like `manage/feature-name/`
+4. The `name` parameter in URL patterns can still contain "admin" (e.g., `name='admin_dashboard'`) - only the path prefix matters
+
 ## UI Editing Guide
 
 ### Base Template
@@ -43,7 +61,7 @@ base.html
    ├── booking_form.html    # Booking form
    ├── my_bookings.html     # User bookings
    ├── login.html           # Login page
-   └── admin_*.html         # Admin pages
+   └── admin_*.html         # Admin pages (under /manage/ paths)
 ```
 
 ### Editing Rules
@@ -58,11 +76,14 @@ base.html
 1. **New feature** → models.py → views.py → urls.py
 2. **Business logic** → views.py
 3. **Database changes** → Run migrations
+4. **New admin page** → Use `manage/` path prefix, NOT `admin/`
 
-## Reference Document
+## Session Configuration
 
-For complete project documentation, read:
-`.trae/docs/stadium-booking-project.md`
+Sessions use cache-backed storage (LocMemCache):
+- Sessions are lost on server restart
+- Users must re-login after server restart
+- Configured in `stadium_booking/settings.py`
 
 ## Quick Checklist Before Editing
 
@@ -71,3 +92,5 @@ For complete project documentation, read:
 - [ ] Follow existing naming conventions
 - [ ] Maintain template inheritance structure
 - [ ] Run migrations if models change
+- [ ] **NEVER use `admin/` path prefix in booking/urls.py**
+- [ ] **ALWAYS use `manage/` path prefix for custom admin pages**

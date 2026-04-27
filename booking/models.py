@@ -21,6 +21,22 @@ class Profile(models.Model):
         return f'{self.user.username} - {self.get_user_type_display()}'
 
 
+class Student(models.Model):
+    name = models.CharField(max_length=100, verbose_name='学员姓名')
+    phone = models.CharField(max_length=20, verbose_name='联系电话')
+    total_class_hours = models.IntegerField(default=0, verbose_name='课时总数')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+
+    class Meta:
+        verbose_name = '学员'
+        verbose_name_plural = '学员'
+        ordering = ['name']
+
+    def __str__(self):
+        return f'{self.name} - {self.phone}'
+
+
 class Court(models.Model):
     name = models.CharField(max_length=100, verbose_name='场地名称')
     description = models.TextField(blank=True, verbose_name='场地描述')
@@ -54,7 +70,6 @@ class CourtAvailability(models.Model):
         return f'{self.court.name} - {self.start_date} 至 {self.end_date} {self.start_time}-{self.end_time}'
 
     def is_date_available(self, date):
-        """检查指定日期是否在该可用时间段内"""
         return self.start_date <= date <= self.end_date
 
 
@@ -80,3 +95,47 @@ class Booking(models.Model):
 
     def __str__(self):
         return f'{self.user.username} - {self.court.name} - {self.date} {self.start_time}-{self.end_time}'
+
+
+class CourseBooking(models.Model):
+    STATUS_CHOICES = [
+        ('active', '有效'),
+        ('cancelled', '已取消'),
+    ]
+
+    court = models.ForeignKey(Court, on_delete=models.CASCADE, related_name='course_bookings', verbose_name='场地')
+    date = models.DateField(verbose_name='预约日期')
+    start_time = models.TimeField(verbose_name='开始时间')
+    end_time = models.TimeField(verbose_name='结束时间')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active', verbose_name='状态')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+
+    class Meta:
+        verbose_name = '课程预约'
+        verbose_name_plural = '课程预约'
+        ordering = ['date', 'start_time']
+
+    def __str__(self):
+        return f'{self.court.name} - {self.date} {self.start_time}-{self.end_time}'
+
+    def get_student_count(self):
+        return self.students.count()
+
+    def get_total_class_hours(self):
+        return sum(cs.class_hours for cs in self.students.all())
+
+
+class CourseBookingStudent(models.Model):
+    booking = models.ForeignKey(CourseBooking, on_delete=models.CASCADE, related_name='students', verbose_name='课程预约')
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='course_bookings', verbose_name='学员')
+    class_hours = models.IntegerField(verbose_name='扣除课时数')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+
+    class Meta:
+        verbose_name = '课程学员'
+        verbose_name_plural = '课程学员'
+        unique_together = ['booking', 'student']
+
+    def __str__(self):
+        return f'{self.booking} - {self.student.name} ({self.class_hours}课时)'
