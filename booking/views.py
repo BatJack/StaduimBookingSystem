@@ -367,32 +367,38 @@ def get_time_slots(request):
                 court=court,
                 date=selected_date,
                 status='active'
-            ).values_list('start_time', 'end_time')
-            
-            booked_slots = set()
-            for start, end in bookings:
-                current = datetime.combine(selected_date, start)
-                end_dt = datetime.combine(selected_date, end)
+            )
+
+            booked_slots = {}
+            for booking in bookings:
+                current = datetime.combine(selected_date, booking.start_time)
+                end_dt = datetime.combine(selected_date, booking.end_time)
                 while current < end_dt:
-                    booked_slots.add(current.time())
+                    booked_slots[current.time()] = {
+                        'booker_name': booking.booker_name,
+                        'booker_phone': booking.booker_phone
+                    }
                     current += timedelta(minutes=30)
-            
+
             current_time = datetime.combine(selected_date, availability.start_time)
             end_time_dt = datetime.combine(selected_date, availability.end_time)
-            
+
             while current_time < end_time_dt:
                 slot_time = current_time.time()
                 slot_end = (current_time + timedelta(minutes=30)).time()
-                
+
                 is_booked = slot_time in booked_slots
-                
+                booking_info = booked_slots.get(slot_time, None)
+
                 court_data['time_slots'].append({
                     'start': slot_time.strftime('%H:%M'),
                     'end': slot_end.strftime('%H:%M'),
                     'label': f"{slot_time.strftime('%H:%M')}-{slot_end.strftime('%H:%M')}",
-                    'is_booked': is_booked
+                    'is_booked': is_booked,
+                    'booker_name': booking_info['booker_name'] if booking_info else None,
+                    'booker_phone': booking_info['booker_phone'] if booking_info else None
                 })
-                
+
                 current_time += timedelta(minutes=30)
         
         data.append(court_data)

@@ -148,10 +148,33 @@
             color: #991b1b;
             border: 1px solid #fca5a5;
             cursor: not-allowed;
+            display: flex;
+            flex-direction: column;
+            padding: 6px 8px;
         }
         .time-cell.booked:hover {
             transform: none;
             box-shadow: none;
+        }
+        .time-cell.booked .slot-label {
+            font-size: 11px;
+            opacity: 0.7;
+        }
+        .time-cell.booked .slot-status {
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+        .time-cell.booked .slot-phone {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 2px;
+            cursor: pointer;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+        }
+        .time-cell.booked .slot-phone:hover {
+            opacity: 1;
         }
         .time-cell.selected {
             background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
@@ -531,29 +554,44 @@
             allTimeSlots.forEach(slot => {
                 html += '<tr>';
                 html += `<td>${slot.start}<br><span style="font-size:11px;color:#9ca3af">${slot.end}</span></td>`;
-                
+
                 availableCourts.forEach(court => {
                     const courtSlot = court.time_slots.find(s => s.start === slot.start && s.end === slot.end);
                     const isBooked = courtSlot ? courtSlot.is_booked : true;
+                    const bookerName = courtSlot ? (courtSlot.booker_name || '未知') : '未知';
+                    const bookerPhone = courtSlot ? (courtSlot.booker_phone || '') : '';
                     const statusClass = isBooked ? 'booked' : 'available';
                     const statusText = isBooked ? '已满' : '可预约';
-                    
+
                     if (!court.is_available) {
                         html += `<td><div class="time-cell no-court"><span class="slot-label">-</span></div></td>`;
-                    } else {
-                        html += `<td><div class="time-cell ${statusClass}" 
+                    } else if (isBooked) {
+                        html += `<td><div class="time-cell ${statusClass}"
                             data-court-id="${court.id}"
                             data-court-name="${court.name}"
-                            data-start="${slot.start}" 
+                            data-start="${slot.start}"
                             data-end="${slot.end}"
-                            data-booked="${isBooked}"
+                            data-booked="true"
+                            data-booker-name="${bookerName}"
+                            data-booker-phone="${bookerPhone}">
+                            <span class="slot-label">${slot.start}</span>
+                            <span class="slot-status">${bookerName}</span>
+                            <span class="slot-phone" ondblclick="copyPhone(this)" title="双击复制电话">${bookerPhone}</span>
+                        </div></td>`;
+                    } else {
+                        html += `<td><div class="time-cell ${statusClass}"
+                            data-court-id="${court.id}"
+                            data-court-name="${court.name}"
+                            data-start="${slot.start}"
+                            data-end="${slot.end}"
+                            data-booked="false"
                             onclick="toggleSlot(this)">
                             <span class="slot-label">${slot.start}</span>
                             <span class="slot-status">${statusText}</span>
                         </div></td>`;
                     }
                 });
-                
+
                 html += '</tr>';
             });
             html += '</tbody></table></div>';
@@ -729,6 +767,61 @@
                 console.error('Error:', error);
                 alert('预约失败，请重试');
             });
+        }
+
+        function copyPhone(element) {
+            const phone = element.textContent;
+            if (!phone) return;
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(phone).then(() => {
+                    showCopyToast('已复制: ' + phone);
+                }).catch(() => {
+                    fallbackCopy(phone);
+                });
+            } else {
+                fallbackCopy(phone);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showCopyToast('已复制: ' + text);
+            } catch (err) {
+                showCopyToast('复制失败', true);
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function showCopyToast(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: ${isError ? '#ef4444' : '#10b981'};
+                color: white;
+                padding: 12px 24px;
+                border-radius: 8px;
+                z-index: 9999;
+                font-size: 14px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 2000);
         }
 
         function checkForGaps(slots) {
