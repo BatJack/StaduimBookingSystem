@@ -238,6 +238,8 @@ def admin_booking_add(request):
         date_str = request.POST.get('date')
         start_time_str = request.POST.get('start_time')
         end_time_str = request.POST.get('end_time')
+        booker_name = request.POST.get('booker_name')
+        booker_phone = request.POST.get('booker_phone')
         
         try:
             user = User.objects.get(username=username)
@@ -303,6 +305,8 @@ def admin_booking_add(request):
                 date=booking_date,
                 start_time=start_time,
                 end_time=end_time,
+                booker_name=booker_name,
+                booker_phone=booker_phone,
                 status='active'
             )
             
@@ -409,8 +413,10 @@ def create_booking_api(request):
     date_str = data.get('date')
     start_time_str = data.get('start_time')
     end_time_str = data.get('end_time')
+    booker_name = data.get('booker_name')
+    booker_phone = data.get('booker_phone')
     
-    if not all([court_id, date_str, start_time_str, end_time_str]):
+    if not all([court_id, date_str, start_time_str, end_time_str, booker_name, booker_phone]):
         return JsonResponse({'error': '缺少必要参数'}, status=400)
     
     try:
@@ -455,6 +461,8 @@ def create_booking_api(request):
         date=booking_date,
         start_time=start_time,
         end_time=end_time,
+        booker_name=booker_name,
+        booker_phone=booker_phone,
         status='active'
     )
     

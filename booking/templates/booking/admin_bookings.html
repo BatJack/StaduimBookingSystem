@@ -57,7 +57,8 @@
                     <thead>
                         <tr>
                             <th style="width: 60px;">ID</th>
-                            <th>用户</th>
+                            <th>预约人</th>
+                            <th>联系方式</th>
                             <th>场地</th>
                             <th>日期</th>
                             <th>时间</th>
@@ -72,8 +73,9 @@
                                     <span class="badge badge-primary">{{ booking.id }}</span>
                                 </td>
                                 <td>
-                                    <strong>{{ booking.user.username }}</strong>
+                                    <strong>{{ booking.booker_name }}</strong>
                                 </td>
+                                <td>{{ booking.booker_phone }}</td>
                                 <td>{{ booking.court.name }}</td>
                                 <td>{{ booking.date|date:"Y-m-d" }}</td>
                                 <td>{{ booking.start_time|time:"H:i" }} - {{ booking.end_time|time:"H:i" }}</td>

@@ -84,6 +84,8 @@ class Booking(models.Model):
     date = models.DateField(verbose_name='预约日期')
     start_time = models.TimeField(verbose_name='开始时间')
     end_time = models.TimeField(verbose_name='结束时间')
+    booker_name = models.CharField(max_length=100, verbose_name='预约人姓名', null=True, blank=True)
+    booker_phone = models.CharField(max_length=20, verbose_name='预约人联系方式', null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active', verbose_name='状态')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
@@ -94,7 +96,7 @@ class Booking(models.Model):
         ordering = ['date', 'start_time']
 
     def __str__(self):
-        return f'{self.user.username} - {self.court.name} - {self.date} {self.start_time}-{self.end_time}'
+        return f'{self.booker_name} - {self.court.name} - {self.date} {self.start_time}-{self.end_time}'
 
 
 class CourseBooking(models.Model):
