@@ -655,6 +655,188 @@
             font-size: 14px;
             color: var(--gray-500);
         }
+        @media (max-width: 768px) {
+            .header .container {
+                padding: 0 16px;
+                height: 56px;
+                flex-wrap: wrap;
+            }
+            .header h1 {
+                font-size: 16px;
+            }
+            .nav {
+                gap: 2px;
+            }
+            .nav a {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+            .container {
+                padding: 16px;
+            }
+            .page-header h2 {
+                font-size: 22px;
+            }
+            .card {
+                padding: 16px;
+            }
+            .card h2 {
+                font-size: 18px;
+            }
+            .grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            .stat-cards {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+            .stat-card {
+                padding: 16px;
+            }
+            .stat-card-value {
+                font-size: 24px;
+            }
+            .stat-card-label {
+                font-size: 12px;
+            }
+            .stat-card-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+                margin-bottom: 12px;
+            }
+            table {
+                font-size: 12px;
+            }
+            table th, table td {
+                padding: 10px 8px;
+            }
+            .btn {
+                padding: 8px 14px;
+                font-size: 13px;
+            }
+            .btn-sm {
+                padding: 4px 8px;
+                font-size: 12px;
+            }
+            .action-btns {
+                flex-direction: column;
+                gap: 4px;
+            }
+            .date-selector {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .messages .message {
+                padding: 10px 14px;
+                font-size: 13px;
+            }
+            .court-card-header {
+                padding: 16px;
+            }
+            .court-card-body {
+                padding: 16px;
+            }
+            .court-card-footer {
+                padding: 12px 16px;
+                flex-direction: column;
+                gap: 8px;
+            }
+            .matrix-wrapper {
+                padding: 12px;
+            }
+            .matrix-table th,
+            .matrix-table td {
+                padding: 8px 4px;
+                font-size: 12px;
+            }
+            .time-cell {
+                padding: 6px 2px;
+                font-size: 11px;
+                min-width: 50px;
+            }
+            .time-cell.booked .slot-status {
+                font-size: 11px;
+            }
+            .time-cell.booked .slot-phone,
+            .time-cell.booked .slot-info,
+            .time-cell.booked .slot-students {
+                font-size: 10px;
+            }
+            .modal-content {
+                width: 95%;
+                margin: 0 10px;
+            }
+            .modal-header {
+                padding: 16px 20px;
+            }
+            .modal-body {
+                padding: 16px;
+            }
+            .modal-footer {
+                padding: 16px 20px;
+                flex-direction: column;
+            }
+            .modal-footer .btn {
+                padding: 12px 16px;
+            }
+            .booking-actions {
+                flex-direction: column;
+            }
+            .btn-confirm, .btn-cancel {
+                width: 100%;
+            }
+            .legend {
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+            .info-banner {
+                padding: 12px 16px;
+                font-size: 13px;
+            }
+            .page-header {
+                margin-bottom: 20px;
+            }
+            .back-btn {
+                width: 36px;
+                height: 36px;
+            }
+            .page-header-title {
+                font-size: 20px;
+            }
+            .step-indicator {
+                flex-direction: column;
+                gap: 4px;
+                padding: 12px 16px;
+            }
+            .step-arrow {
+                transform: rotate(90deg);
+            }
+        }
+        @media (max-width: 480px) {
+            .header .container {
+                padding: 0 12px;
+                height: 52px;
+            }
+            .header h1 {
+                font-size: 14px;
+            }
+            .nav a {
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+            .container {
+                padding: 12px;
+            }
+            .stat-cards {
+                grid-template-columns: 1fr;
+            }
+            .management-cards {
+                grid-template-columns: 1fr !important;
+            }
+        }
     </style>
 </head>
 <body>
