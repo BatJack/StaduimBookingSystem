@@ -2,7 +2,7 @@
 
 ## 项目概述
 
-这是一个基于 **Django 6.0** 框架开发的体育场馆预约系统，支持用户登录、场地预约、管理员管理等功能。
+这是一个基于 **Django 6.0** 框架开发的体育场馆预约系统，支持用户登录、场地预约、课程预约、学员管理、管理员管理等功能。
 
 ---
 
@@ -12,9 +12,9 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                         前端 (HTML Templates)                    │
 │  booking/templates/booking/                                     │
-│  ├── base.html          # 基础模板 (全局CSS样式、导航栏)          │
+│  ├── base.html          # 基础模板 (全局CSS样式、导航栏、响应式)  │
 │  ├── login.html         # 登录页                               │
-│  ├── court_list.html    # 场地列表 + AJAX预约                   │
+│  ├── court_list.html    # 场地列表 + 矩阵式预约界面              │
 │  ├── my_bookings.html   # 我的预约                             │
 │  └── admin_*.html       # 管理后台页面                         │
 └─────────────────────────────────────────────────────────────────┘
@@ -28,7 +28,7 @@
 │  /api/time-slots/     → get_time_slots # 获取可用时间段 (AJAX)  │
 │  /api/create-booking/ → create_booking_api # 创建预约 (AJAX)     │
 │  /my-bookings/        → my_bookings    # 我的预约                │
-│  /admin/              → admin_*        # 管理后台相关路由        │
+│  /manage/             → admin_*        # 管理后台相关路由        │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -48,9 +48,11 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                      数据模型 (booking/models.py)                 │
 │  Profile                # 用户类型表 (admin/regular)            │
+│  Student                # 学员信息表                            │
 │  Court                  # 场地表                                │
-│  CourtAvailability      # 可预约时间段表 (日期范围+每天时间)       │
-│  Booking                # 预约记录表                            │
+│  CourtAvailability      # 可预约时间段表                        │
+│  Booking                # 统一预约表 (场地预约/课程预约)         │
+│  BookingStudent         # 预约学员关联表                        │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -65,31 +67,39 @@ StaduimBookingSystem/
 ├── create_user.py                # 创建用户脚本 (支持普通用户/管理员)
 ├── README.md                     # 项目说明文档
 ├── .gitignore                    # Git忽略配置
+├── 关闭防火墙.bat                 # 一键关闭防火墙
+├── 开启防火墙.bat                 # 一键开启防火墙
 │
 ├── stadium_booking/              # Django项目配置
-│   ├── settings.py               # 项目设置 (INSTALLED_APPS等)
+│   ├── settings.py               # 项目设置 (INSTALLED_APPS、缓存会话等)
 │   ├── urls.py                   # 主URL路由 (包含booking.urls)
 │   ├── wsgi.py                   # WSGI部署配置
 │   └── asgi.py                   # ASGI部署配置
 │
 └── booking/                      # 核心应用
-    ├── models.py                 # 数据模型 (Profile, Court, CourtAvailability, Booking)
+    ├── models.py                 # 数据模型
     ├── views.py                  # 视图函数 (所有业务逻辑)
     ├── urls.py                   # 应用URL路由
-    ├── admin.py                  # Django Admin配置
+    ├── admin.py                  # Django Admin配置 (只读)
     │
     └── templates/booking/       # HTML模板
-        ├── base.html              # 基础模板 (全局CSS: ~700行)
+        ├── base.html              # 基础模板 (全局CSS、响应式设计)
         ├── login.html             # 登录页
-        ├── court_list.html        # 场地列表 (AJAX预约)
+        ├── court_list.html        # 场地列表 (矩阵式预约界面)
         ├── my_bookings.html       # 我的预约
-        ├── admin_dashboard.html    # 管理后台首页
+        ├── admin_dashboard.html    # 管理后台首页 (仪表盘)
         ├── admin_court_list.html   # 场地管理列表
         ├── admin_court_form.html   # 添加/编辑场地
         ├── admin_availability_list.html  # 时间段管理
         ├── admin_availability_form.html # 添加/编辑时间段
         ├── admin_bookings.html     # 预约管理列表
-        └── admin_booking_form.html # 管理员添加预约
+        ├── admin_booking_form.html # 管理员添加预约
+        ├── admin_booking_edit.html # 预约详情管理
+        ├── admin_student_list.html # 学员管理列表
+        ├── admin_student_form.html # 添加/编辑学员
+        ├── admin_course_booking_list.html  # 课程预约列表
+        ├── admin_course_booking_form.html  # 新增课程预约
+        └── admin_course_booking_edit.html  # 课程预约管理
 
 ```
 
@@ -111,7 +121,18 @@ StaduimBookingSystem/
 - `admin` - 管理员，可访问管理后台
 - `regular` - 普通用户，仅可预约场地
 
-### 2. Court (场地)
+### 2. Student (学员)
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | BigAutoField | 主键 |
+| name | CharField(100) | 学员姓名 |
+| phone | CharField(20) | 联系电话 |
+| total_class_hours | IntegerField | 课时总数 (30分钟/课时) |
+| created_at | DateTimeField | 创建时间 |
+| updated_at | DateTimeField | 更新时间 |
+
+### 3. Court (场地)
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
@@ -123,7 +144,7 @@ StaduimBookingSystem/
 
 **外键关系**：一个场地有多个预约 (`court.bookings`)，一个场地有多个可用时间段 (`court.availabilities`)
 
-### 3. CourtAvailability (可用时间段)
+### 4. CourtAvailability (可用时间段)
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
@@ -138,24 +159,40 @@ StaduimBookingSystem/
 
 **关键方法**：`is_date_available(date)` - 检查指定日期是否在可用范围内
 
-### 4. Booking (预约)
+### 5. Booking (统一预约)
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | id | BigAutoField | 主键 |
-| user | ForeignKey | 预约用户 |
+| booking_type | CharField | 预约类型 (court/course) |
+| user | ForeignKey | 预约用户 (可为空) |
 | court | ForeignKey | 预约场地 |
 | date | DateField | 预约日期 |
 | start_time | TimeField | 开始时间 |
 | end_time | TimeField | 结束时间 |
+| booker_name | CharField(100) | 预约人姓名 |
+| booker_phone | CharField(20) | 预约人联系方式 |
 | status | CharField | 状态 (active/cancelled) |
 | created_at | DateTimeField | 创建时间 |
 | updated_at | DateTimeField | 更新时间 |
 
-**业务规则**：
-- 时间必须是整点或半点 (minute ∈ {0, 30})
-- 预约时间必须在场地可用时间段内
-- 不能与已有预约冲突
+**辅助方法**：
+- `is_court_booking()` - 判断是否为场地预约
+- `is_course_booking()` - 判断是否为课程预约
+- `get_student_count()` - 获取学员人数
+- `get_total_class_hours()` - 获取总课时数
+
+### 6. BookingStudent (预约学员关联)
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | BigAutoField | 主键 |
+| booking | ForeignKey | 关联预约 |
+| student | ForeignKey | 关联学员 |
+| class_hours | IntegerField | 扣除课时数 |
+| created_at | DateTimeField | 创建时间 |
+
+**唯一约束**：`unique_together: ['booking', 'student']`
 
 ---
 
@@ -170,15 +207,24 @@ StaduimBookingSystem/
 | `/api/create-booking/` | `create_booking_api` | POST | 创建预约 (AJAX) |
 | `/my-bookings/` | `my_bookings` | GET | 我的预约 |
 | `/cancel-booking/<id>/` | `cancel_booking` | GET | 取消预约 |
-| `/admin/` | `admin_dashboard` | GET | 管理后台首页 |
-| `/admin/courts/` | `admin_court_list` | GET | 场地管理列表 |
-| `/admin/courts/add/` | `admin_court_add` | GET/POST | 添加场地 |
-| `/admin/courts/edit/<id>/` | `admin_court_edit` | GET/POST | 编辑场地 |
-| `/admin/courts/delete/<id>/` | `admin_court_delete` | GET | 删除场地 |
-| `/admin/availabilities/` | `admin_availability_list` | GET | 时间段管理列表 |
-| `/admin/availabilities/add/` | `admin_availability_add` | GET/POST | 添加时间段 |
-| `/admin/bookings/` | `admin_bookings` | GET | 预约管理列表 |
-| `/admin/bookings/add/` | `admin_booking_add` | GET/POST | 管理员添加预约 |
+| `/manage/` | `admin_dashboard` | GET | 管理后台首页 |
+| `/manage/courts/` | `admin_court_list` | GET | 场地管理列表 |
+| `/manage/courts/add/` | `admin_court_add` | GET/POST | 添加场地 |
+| `/manage/courts/edit/<id>/` | `admin_court_edit` | GET/POST | 编辑场地 |
+| `/manage/courts/delete/<id>/` | `admin_court_delete` | GET | 删除场地 |
+| `/manage/availabilities/` | `admin_availability_list` | GET | 时间段管理列表 |
+| `/manage/availabilities/add/` | `admin_availability_add` | GET/POST | 添加时间段 |
+| `/manage/bookings/` | `admin_bookings` | GET | 预约管理列表 |
+| `/manage/bookings/add/` | `admin_booking_add` | GET/POST | 管理员添加预约 |
+| `/manage/bookings/edit/<id>/` | `admin_booking_edit` | GET/POST | 预约详情管理 |
+| `/manage/students/` | `admin_student_list` | GET | 学员管理列表 |
+| `/manage/students/add/` | `admin_student_add` | GET/POST | 添加学员 |
+| `/manage/students/edit/<id>/` | `admin_student_edit` | GET/POST | 编辑学员 |
+| `/manage/students/delete/<id>/` | `admin_student_delete` | GET | 删除学员 |
+| `/manage/course-bookings/` | `admin_course_booking_list` | GET | 课程预约列表 |
+| `/manage/course-bookings/add/` | `admin_course_booking_add` | GET/POST | 新增课程预约 |
+| `/manage/course-bookings/edit/<id>/` | `admin_course_booking_edit` | GET/POST | 课程预约管理 |
+| `/manage/course-bookings/delete/<id>/` | `admin_course_booking_delete` | GET | 删除课程预约 |
 
 ---
 
@@ -203,8 +249,36 @@ StaduimBookingSystem/
       "start_time": "08:00",
       "end_time": "22:00",
       "time_slots": [
-        {"start": "08:00", "end": "08:30", "label": "08:00-08:30", "is_booked": false},
-        ...
+        {
+          "start": "08:00",
+          "end": "08:30",
+          "label": "08:00-08:30",
+          "is_booked": false
+        },
+        {
+          "start": "09:00",
+          "end": "09:30",
+          "label": "09:00-09:30",
+          "is_booked": true,
+          "booking_type": "court",
+          "booking_id": 1,
+          "booker_name": "张三",
+          "booker_phone": "13800138000"
+        },
+        {
+          "start": "10:00",
+          "end": "10:30",
+          "label": "10:00-10:30",
+          "is_booked": true,
+          "booking_type": "course",
+          "booking_id": 2,
+          "student_count": 3,
+          "total_class_hours": 6,
+          "students": [
+            {"student__name": "李四", "student__phone": "13900139000", "class_hours": 2},
+            ...
+          ]
+        }
       ]
     }
   ]
@@ -221,7 +295,9 @@ StaduimBookingSystem/
   "court_id": 1,
   "date": "2026-04-15",
   "start_time": "09:00",
-  "end_time": "10:00"
+  "end_time": "10:00",
+  "booker_name": "张三",
+  "booker_phone": "13800138000"
 }
 ```
 
@@ -298,21 +374,23 @@ def login_view(request):
                               ↓
 2. 用户选择日期 → JavaScript调用 /api/time-slots/?date=XXX
                               ↓
-3. get_time_slots() 查询数据库，返回可用时间段
+3. get_time_slots() 查询数据库，返回可用时间段（含预约类型、预约人信息）
                               ↓
-4. 前端展示时间段网格，用户点击选择
+4. 前端展示矩阵式时间段网格，用户点击选择
                               ↓
-5. 用户点击"确认预约" → POST /api/create-booking/
+5. 用户点击"确认预约" → 弹出填写预约人信息弹窗
                               ↓
-6. create_booking_api() 验证并创建预约
+6. 用户填写姓名和手机号 → POST /api/create-booking/
                               ↓
-7. 返回结果，前端显示成功/失败提示
+7. create_booking_api() 验证并创建预约
+                              ↓
+8. 返回结果，前端显示成功/失败提示
 ```
 
 ### 管理员设置可用时间段流程
 
 ```
-1. 管理员访问 /admin/availabilities/add/
+1. 管理员访问 /manage/availabilities/add/
                               ↓
 2. 填写表单：场地、开始日期、结束日期、每天时间
                               ↓
@@ -321,14 +399,28 @@ def login_view(request):
 4. 该场地在指定日期范围内每天开放
 ```
 
+### 课程预约流程
+
+```
+1. 管理员访问 /manage/course-bookings/add/
+                              ↓
+2. 选择场地和预约时间 → 提交
+                              ↓
+3. 进入添加学员页面 → 选择学员并设置课时
+                              ↓
+4. 确认预约 → 创建Booking记录(booking_type='course')
+                              ↓
+5. 自动扣除学员课时 → 创建BookingStudent记录
+```
+
 ---
 
 ## 模板继承关系
 
 ```
-base.html (基础模板)
+base.html (基础模板，含响应式CSS)
 ├── login.html
-├── court_list.html     (用户预约界面)
+├── court_list.html     (矩阵式预约界面)
 ├── my_bookings.html
 └── admin_*.html         (管理后台)
     ├── admin_dashboard.html
@@ -337,7 +429,13 @@ base.html (基础模板)
     ├── admin_availability_list.html
     ├── admin_availability_form.html
     ├── admin_bookings.html
-    └── admin_booking_form.html
+    ├── admin_booking_form.html
+    ├── admin_booking_edit.html
+    ├── admin_student_list.html
+    ├── admin_student_form.html
+    ├── admin_course_booking_list.html
+    ├── admin_course_booking_form.html
+    └── admin_course_booking_edit.html
 ```
 
 所有子页面通过 `{% extends 'booking/base.html' %}` 继承基础模板。
@@ -363,6 +461,21 @@ base.html (基础模板)
 - `.grid` - 网格布局
 - `.table-wrapper table` - 表格
 - `.form-group` - 表单组
+- `.stat-cards` - 统计卡片
+- `.matrix-table` - 矩阵式预约表格
+
+**响应式设计**：
+- `@media (max-width: 768px)` - 平板适配
+- `@media (max-width: 480px)` - 手机适配
+
+---
+
+## 会话配置
+
+系统使用缓存会话存储（LocMemCache）：
+- 会话数据存储在内存缓存中
+- 服务器重启后会话丢失，用户需重新登录
+- 配置在 `stadium_booking/settings.py` 中
 
 ---
 
@@ -371,6 +484,9 @@ base.html (基础模板)
 ```bash
 # 运行开发服务器
 python manage.py runserver
+
+# 运行开发服务器（允许局域网访问）
+python manage.py runserver 0.0.0.0:8000
 
 # 创建数据库迁移
 python manage.py makemigrations
@@ -400,3 +516,8 @@ python manage.py shell
 3. **数据库变更**：修改 `models.py` 后需要执行 `makemigrations` 和 `migrate`
 4. **AJAX请求**：前端使用原生JavaScript，无额外框架依赖
 5. **Profile自动创建**：新用户通过 `create_user.py` 创建时会自动创建 Profile 记录
+6. **统一预约模型**：Booking模型通过booking_type区分场地预约和课程预约
+7. **冲突检测**：场地预约和课程预约共享冲突检测逻辑
+8. **响应式设计**：系统支持手机端访问，界面自动适配
+9. **会话存储**：服务器重启后需重新登录
+10. **URL路由**：自定义管理后台使用 `/manage/` 前缀，避免与Django Admin冲突

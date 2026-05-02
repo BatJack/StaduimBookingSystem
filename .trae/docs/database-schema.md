@@ -22,32 +22,26 @@
                                   ▼
 ┌──────────────────────────────────────────────────────────────────┐
 │                                                                  │
-│  ┌──────────┐     1:N      ┌──────────────────┐     1:N         │
+│  ┌──────────┐     1:N      ┌──────────────────┐                 │
 │  │  Court   │─────────────│ CourtAvailability │                 │
 │  │  场地    │             │   可用时间段      │                 │
 │  └──────────┘             └──────────────────┘                 │
 │       │                                                        │
 │       │ 1:N                                                    │
-│       ├──────────────┐                                        │
-│       │              │ 1:N                                     │
-│       ▼              ▼                                         │
-│  ┌──────────┐  ┌─────────────────┐                           │
-│  │ Booking  │  │ CourseBooking   │     课程预约              │
-│  │ 预约      │  └─────────────────┘                           │
-│  └──────────┘           │                                       │
-│       │                 │ 1:N                                   │
-│       │                 ▼                                       │
-│       │        ┌─────────────────────┐                        │
-│       │        │ CourseBookingStudent │                        │
-│       │        │    课程学员关系       │                        │
-│       │        └─────────────────────┘                        │
-│       │                 │                                       │
-│       │                 │ N:1                                   │
-│       │                 ▼                                       │
-│       │          ┌──────────────┐                              │
-│       └──────────│   Student     │     学员信息                 │
-│  (普通预约)      │  姓名/电话/课时 │                              │
-│                  └──────────────┘                              │
+│       ▼                                                        │
+│  ┌──────────────────────────────┐                             │
+│  │         Booking              │                             │
+│  │  预约（统一模型）             │                             │
+│  │  booking_type: 场地/课程      │                             │
+│  │  booker_name, booker_phone   │                             │
+│  └──────────────────────────────┘                             │
+│       │                                                        │
+│       │ 1:N                                                    │
+│       ▼                                                        │
+│  ┌─────────────────────┐         ┌──────────────┐             │
+│  │  BookingStudent     │────────│   Student     │             │
+│  │  预约学员关系        │  N:1   │  学员信息      │             │
+│  └─────────────────────┘         └──────────────┘             │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -102,7 +96,6 @@
 **关联关系**：
 - `court.availabilities` → 1:N → `CourtAvailability`
 - `court.bookings` → 1:N → `Booking`
-- `court.course_bookings` → 1:N → `CourseBooking`
 
 ---
 
@@ -127,31 +120,45 @@
 
 ---
 
-### 5. booking_booking (普通预约)
+### 5. booking_booking (预约表 - 统一模型)
 
 **关联**：
-- `auth_user.id` → `booking_booking.user` (N:1)
+- `auth_user.id` → `booking_booking.user` (N:1, 可为空)
 - `booking_court.id` → `booking_booking.court` (N:1)
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | id | BigAutoField | 主键 |
-| user_id | INTEGER | 外键关联User |
+| booking_type | VARCHAR(20) | 预约类型 |
+| user_id | INTEGER | 外键关联User（可为空） |
 | court_id | INTEGER | 外键关联Court |
 | date | DATE | 预约日期 |
 | start_time | TIME | 开始时间 |
 | end_time | TIME | 结束时间 |
+| booker_name | VARCHAR(100) | 预约人姓名（可为空） |
+| booker_phone | VARCHAR(20) | 预约人联系方式（可为空） |
 | status | VARCHAR(20) | 状态 |
 | created_at | DATETIME | 创建时间 |
 | updated_at | DATETIME | 更新时间 |
+
+**booking_type选项**：
+- `court` - 场地预约
+- `course` - 课程预约
 
 **status选项**：
 - `active` - 有效
 - `cancelled` - 已取消
 
+**辅助方法**：
+- `is_court_booking()` - 判断是否为场地预约
+- `is_course_booking()` - 判断是否为课程预约
+- `get_student_count()` - 获取学员人数（课程预约使用）
+- `get_total_class_hours()` - 获取总课时数（课程预约使用）
+
 **业务规则**：
 - 时间必须是整点或半点
-- 不能与同一场地的其他有效预约冲突
+- 不能与同一场地的其他有效预约冲突（包括场地预约和课程预约）
+- 课程预约的user字段可为空
 
 ---
 
@@ -167,7 +174,7 @@
 | updated_at | DATETIME | 更新时间 |
 
 **关联关系**：
-- `student.course_bookings` → N:M → `CourseBooking` (通过CourseBookingStudent)
+- `student.bookings` → N:M → `Booking` (通过BookingStudent)
 
 **业务规则**：
 - 课时数必须 ≥ 0
@@ -176,49 +183,21 @@
 
 ---
 
-### 7. booking_coursebooking (课程预约)
-
-**关联**：`booking_court.id` → `booking_coursebooking.court` (N:1)
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | BigAutoField | 主键 |
-| court_id | INTEGER | 外键关联Court |
-| date | DATE | 预约日期 |
-| start_time | TIME | 开始时间 |
-| end_time | TIME | 结束时间 |
-| status | VARCHAR(20) | 状态 |
-| created_at | DATETIME | 创建时间 |
-| updated_at | DATETIME | 更新时间 |
-
-**status选项**：
-- `active` - 有效
-- `cancelled` - 已取消（学员课时将全部退还）
-
-**关联关系**：
-- `booking.students` → 1:N → `CourseBookingStudent`
-
-**辅助方法**：
-- `get_student_count()` - 获取学员人数
-- `get_total_class_hours()` - 获取总课时数
-
----
-
-### 8. booking_coursebookingstudent (课程学员关联表)
+### 7. booking_bookingstudent (预约学员关联表)
 
 **关联**：
-- `booking_coursebooking.id` → `booking_coursebookingstudent.booking` (N:1)
-- `booking_student.id` → `booking_coursebookingstudent.student` (N:1)
+- `booking_booking.id` → `booking_bookingstudent.booking` (N:1)
+- `booking_student.id` → `booking_bookingstudent.student` (N:1)
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | id | BigAutoField | 主键 |
-| booking_id | INTEGER | 外键关联CourseBooking |
+| booking_id | INTEGER | 外键关联Booking |
 | student_id | INTEGER | 外键关联Student |
 | class_hours | INTEGER | 扣除课时数 |
 | created_at | DATETIME | 创建时间 |
 
-**唯一约束**：`unique_together: ['booking', 'student']` - 同一学员不能重复加入同一课程
+**唯一约束**：`unique_together: ['booking', 'student']` - 同一学员不能重复加入同一预约
 
 **业务规则**：
 - 添加学员时：从Student.total_class_hours中扣除相应课时
@@ -233,10 +212,9 @@
 | Profile | User (1:1) | 扩展用户类型 |
 | Court | - | 场地主表 |
 | CourtAvailability | Court (N:1) | 场地可用时间 |
-| Booking | User (N:1), Court (N:1) | 普通用户预约 |
+| Booking | User (N:1, 可空), Court (N:1) | 统一预约模型（场地/课程） |
 | Student | - | 学员信息 |
-| CourseBooking | Court (N:1) | 课程预约（管理员操作） |
-| CourseBookingStudent | CourseBooking (N:1), Student (N:1) | 课程-学员多对多关联 |
+| BookingStudent | Booking (N:1), Student (N:1) | 预约-学员多对多关联 |
 
 ---
 
@@ -246,8 +224,7 @@
 |------|---------|
 | booking_booking | (court_id, date, start_time), (user_id) |
 | booking_courtavailability | (court_id, start_date, end_date) |
-| booking_coursebooking | (court_id, date, start_time) |
-| booking_coursebookingstudent | (booking_id, student_id) UNIQUE |
+| booking_bookingstudent | (booking_id, student_id) UNIQUE |
 
 ---
 
@@ -287,9 +264,11 @@ python manage.py migrate booking <迁移名称>
 
 1. **外键关系**：修改外键时要注意级联关系
 2. **课时逻辑**：Student.total_class_hours的增减必须在同一事务中完成
-3. **唯一约束**：CourseBookingStudent使用unique_together防止重复
-4. **时间验证**：Booking和CourseBooking的开始/结束时间必须是整点或半点
-5. **状态流转**：Booking和CourseBooking的status变更要注意业务逻辑（如取消预约、删除课程等）
+3. **唯一约束**：BookingStudent使用unique_together防止重复
+4. **时间验证**：Booking的开始/结束时间必须是整点或半点
+5. **状态流转**：Booking的status变更要注意业务逻辑（如取消预约、删除课程等）
+6. **统一预约模型**：Booking模型通过booking_type区分场地预约和课程预约，冲突检测需检查所有类型的预约
+7. **预约人信息**：booker_name和booker_phone字段用于记录预约人联系方式，可为空
 
 ---
 
