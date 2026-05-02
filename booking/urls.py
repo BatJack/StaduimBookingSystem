@@ -18,6 +18,7 @@ urlpatterns = [
     path('manage/availabilities/add/', views.admin_availability_add, name='admin_availability_add'),
     path('manage/bookings/', views.admin_bookings, name='admin_bookings'),
     path('manage/bookings/add/', views.admin_booking_add, name='admin_booking_add'),
+    path('manage/bookings/edit/<int:booking_id>/', views.admin_booking_edit, name='admin_booking_edit'),
     path('manage/students/', views.admin_student_list, name='admin_student_list'),
     path('manage/students/add/', views.admin_student_add, name='admin_student_add'),
     path('manage/students/edit/<int:student_id>/', views.admin_student_edit, name='admin_student_edit'),

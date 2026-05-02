@@ -165,6 +165,18 @@
             font-weight: 600;
             margin-top: 2px;
         }
+        .time-cell.booked .slot-info {
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 2px;
+            color: #7c3aed;
+        }
+        .time-cell.booked .slot-students {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 2px;
+            color: #6b7280;
+        }
         .time-cell.booked .slot-phone {
             font-size: 11px;
             opacity: 0.8;
@@ -460,6 +472,9 @@
         let selectedCourtId = null;
         let currentDate = null;
         let courtsData = [];
+        const isAdmin = {{ is_admin|yesno:"true,false" }};
+        const adminBookingEditUrl = "{% url 'admin_booking_edit' 0 %}";
+        const adminCourseBookingEditUrl = "{% url 'admin_course_booking_edit' 0 %}";
 
         function formatDate(dateStr) {
             const date = new Date(dateStr);
@@ -558,26 +573,61 @@
                 availableCourts.forEach(court => {
                     const courtSlot = court.time_slots.find(s => s.start === slot.start && s.end === slot.end);
                     const isBooked = courtSlot ? courtSlot.is_booked : true;
-                    const bookerName = courtSlot ? (courtSlot.booker_name || '未知') : '未知';
-                    const bookerPhone = courtSlot ? (courtSlot.booker_phone || '') : '';
                     const statusClass = isBooked ? 'booked' : 'available';
                     const statusText = isBooked ? '已满' : '可预约';
 
                     if (!court.is_available) {
                         html += `<td><div class="time-cell no-court"><span class="slot-label">-</span></div></td>`;
                     } else if (isBooked) {
-                        html += `<td><div class="time-cell ${statusClass}"
-                            data-court-id="${court.id}"
-                            data-court-name="${court.name}"
-                            data-start="${slot.start}"
-                            data-end="${slot.end}"
-                            data-booked="true"
-                            data-booker-name="${bookerName}"
-                            data-booker-phone="${bookerPhone}">
-                            <span class="slot-label">${slot.start}</span>
-                            <span class="slot-status">${bookerName}</span>
-                            <span class="slot-phone" ondblclick="copyPhone(this)" title="双击复制电话">${bookerPhone}</span>
-                        </div></td>`;
+                        const bookingType = courtSlot ? courtSlot.booking_type : 'court';
+                        const bookerName = courtSlot ? (courtSlot.booker_name || '未知') : '未知';
+                        const bookerPhone = courtSlot ? (courtSlot.booker_phone || '') : '';
+                        const bookingId = courtSlot ? courtSlot.booking_id : '';
+                        const studentCount = courtSlot ? (courtSlot.student_count || 0) : 0;
+                        const totalClassHours = courtSlot ? (courtSlot.total_class_hours || 0) : 0;
+                        const students = courtSlot ? (courtSlot.students || []) : [];
+
+                        let cellContent = `<span class="slot-label">${slot.start}</span>`;
+
+                        if (isAdmin) {
+                            if (bookingType === 'course') {
+                                cellContent += `<span class="slot-status">📚 课程预约</span>`;
+                                cellContent += `<span class="slot-info">${studentCount}人 / ${totalClassHours}课时</span>`;
+                                if (students.length > 0) {
+                                    const studentNames = students.map(s => s.student__name).join('、');
+                                    cellContent += `<span class="slot-students">${studentNames}</span>`;
+                                }
+                            } else {
+                                cellContent += `<span class="slot-status">${bookerName}</span>`;
+                                cellContent += `<span class="slot-phone" onclick="copyPhone(event, '${bookerPhone}')" title="点击复制电话">${bookerPhone}</span>`;
+                            }
+
+                            const editUrl = bookingType === 'course'
+                                ? adminCourseBookingEditUrl.replace('0', bookingId)
+                                : adminBookingEditUrl.replace('0', bookingId);
+
+                            html += `<td><div class="time-cell ${statusClass}"
+                                data-court-id="${court.id}"
+                                data-court-name="${court.name}"
+                                data-start="${slot.start}"
+                                data-end="${slot.end}"
+                                data-booked="true"
+                                data-booking-type="${bookingType}"
+                                data-booking-id="${bookingId}"
+                                ondblclick="navigateToEdit(this)">
+                                ${cellContent}
+                            </div></td>`;
+                        } else {
+                            cellContent += `<span class="slot-status">已预约</span>`;
+                            html += `<td><div class="time-cell ${statusClass}"
+                                data-court-id="${court.id}"
+                                data-court-name="${court.name}"
+                                data-start="${slot.start}"
+                                data-end="${slot.end}"
+                                data-booked="true">
+                                ${cellContent}
+                            </div></td>`;
+                        }
                     } else {
                         html += `<td><div class="time-cell ${statusClass}"
                             data-court-id="${court.id}"
@@ -769,8 +819,8 @@
             });
         }
 
-        function copyPhone(element) {
-            const phone = element.textContent;
+        function copyPhone(event, phone) {
+            event.stopPropagation();
             if (!phone) return;
 
             if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -782,6 +832,19 @@
             } else {
                 fallbackCopy(phone);
             }
+        }
+
+        function navigateToEdit(element) {
+            const bookingType = element.dataset.bookingType;
+            const bookingId = element.dataset.bookingId;
+
+            if (!bookingId) return;
+
+            const url = bookingType === 'course'
+                ? adminCourseBookingEditUrl.replace('0', bookingId)
+                : adminBookingEditUrl.replace('0', bookingId);
+
+            window.location.href = url;
         }
 
         function fallbackCopy(text) {

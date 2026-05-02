@@ -41,7 +41,11 @@ def logout_view(request):
 def court_list(request):
     courts = Court.objects.all()
     today = timezone.now().date()
-    return render(request, 'booking/court_list.html', {'courts': courts, 'today': today})
+    return render(request, 'booking/court_list.html', {
+        'courts': courts,
+        'today': today,
+        'is_admin': is_admin_user(request.user)
+    })
 
 
 @login_required
@@ -327,6 +331,31 @@ def admin_booking_add(request):
 
 
 @login_required
+def admin_booking_edit(request, booking_id):
+    if not is_admin_user(request.user):
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    booking = get_object_or_404(Booking, id=booking_id, booking_type='court')
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'cancel':
+            booking.status = 'cancelled'
+            booking.save()
+            messages.success(request, '预约已取消')
+            return redirect('admin_bookings')
+        
+        if action == 'delete':
+            booking.delete()
+            messages.success(request, '预约已删除')
+            return redirect('admin_bookings')
+    
+    return render(request, 'booking/admin_booking_edit.html', {'booking': booking})
+
+
+@login_required
 @require_GET
 def get_time_slots(request):
     date_str = request.GET.get('date')
@@ -374,10 +403,20 @@ def get_time_slots(request):
                 current = datetime.combine(selected_date, booking.start_time)
                 end_dt = datetime.combine(selected_date, booking.end_time)
                 while current < end_dt:
-                    booked_slots[current.time()] = {
+                    slot_info = {
+                        'booking_type': booking.booking_type,
+                        'booking_id': booking.id,
                         'booker_name': booking.booker_name,
-                        'booker_phone': booking.booker_phone
+                        'booker_phone': booking.booker_phone,
                     }
+                    if booking.booking_type == 'course':
+                        students = list(booking.students.select_related('student').values(
+                            'student__name', 'student__phone', 'class_hours'
+                        ))
+                        slot_info['students'] = students
+                        slot_info['student_count'] = len(students)
+                        slot_info['total_class_hours'] = sum(s['class_hours'] for s in students)
+                    booked_slots[current.time()] = slot_info
                     current += timedelta(minutes=30)
 
             current_time = datetime.combine(selected_date, availability.start_time)
@@ -390,14 +429,23 @@ def get_time_slots(request):
                 is_booked = slot_time in booked_slots
                 booking_info = booked_slots.get(slot_time, None)
 
-                court_data['time_slots'].append({
+                slot_data = {
                     'start': slot_time.strftime('%H:%M'),
                     'end': slot_end.strftime('%H:%M'),
                     'label': f"{slot_time.strftime('%H:%M')}-{slot_end.strftime('%H:%M')}",
                     'is_booked': is_booked,
-                    'booker_name': booking_info['booker_name'] if booking_info else None,
-                    'booker_phone': booking_info['booker_phone'] if booking_info else None
-                })
+                }
+                if booking_info:
+                    slot_data['booking_type'] = booking_info['booking_type']
+                    slot_data['booking_id'] = booking_info['booking_id']
+                    slot_data['booker_name'] = booking_info['booker_name']
+                    slot_data['booker_phone'] = booking_info['booker_phone']
+                    if booking_info['booking_type'] == 'course':
+                        slot_data['students'] = booking_info['students']
+                        slot_data['student_count'] = booking_info['student_count']
+                        slot_data['total_class_hours'] = booking_info['total_class_hours']
+
+                court_data['time_slots'].append(slot_data)
 
                 current_time += timedelta(minutes=30)
         
