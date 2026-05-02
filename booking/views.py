@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST, require_GET
 from datetime import datetime, timedelta, time
-from .models import Court, CourtAvailability, Booking, Profile, Student, CourseBooking, CourseBookingStudent
+from .models import Court, CourtAvailability, Booking, Profile, Student, BookingStudent
 
 
 def is_admin_user(user):
@@ -541,7 +541,7 @@ def admin_course_booking_list(request):
         return redirect('court_list')
     
     today = timezone.now().date()
-    bookings = CourseBooking.objects.all().select_related('court').order_by('-date', 'start_time')
+    bookings = Booking.objects.filter(booking_type='course').select_related('court').order_by('-date', 'start_time')
     return render(request, 'booking/admin_course_booking_list.html', {
         'bookings': bookings,
         'today': today,
@@ -603,7 +603,7 @@ def admin_course_booking_add(request):
                         'students': Student.objects.all(),
                     })
                 
-                conflicting = CourseBooking.objects.filter(
+                conflicting = Booking.objects.filter(
                     court=court,
                     date=booking_date,
                     status='active'
@@ -614,13 +614,14 @@ def admin_course_booking_add(request):
                 )
                 
                 if conflicting.exists():
-                    messages.error(request, '该时间段已有课程预约')
+                    messages.error(request, '该时间段已被预约')
                     return render(request, 'booking/admin_course_booking_form.html', {
                         'courts': Court.objects.all(),
                         'students': Student.objects.all(),
                     })
                 
-                booking = CourseBooking.objects.create(
+                booking = Booking.objects.create(
+                    booking_type='course',
                     court=court,
                     date=booking_date,
                     start_time=start_time,
@@ -638,7 +639,7 @@ def admin_course_booking_add(request):
         
         elif action == 'add_students':
             booking_id = request.POST.get('booking_id')
-            booking = get_object_or_404(CourseBooking, id=booking_id)
+            booking = get_object_or_404(Booking, id=booking_id, booking_type='course')
             
             student_ids = request.POST.getlist('students')
             class_hours = request.POST.get('class_hours')
@@ -681,7 +682,7 @@ def admin_course_booking_add(request):
                     student.total_class_hours -= hours
                     student.save()
                     
-                    CourseBookingStudent.objects.create(
+                    BookingStudent.objects.create(
                         booking=booking,
                         student=student,
                         class_hours=hours
@@ -706,7 +707,7 @@ def admin_course_booking_edit(request, booking_id):
         messages.error(request, '您没有权限访问此页面')
         return redirect('court_list')
     
-    booking = get_object_or_404(CourseBooking, id=booking_id)
+    booking = get_object_or_404(Booking, id=booking_id, booking_type='course')
     booking_students = booking.students.select_related('student').all()
     all_students = Student.objects.all()
     
@@ -716,7 +717,7 @@ def admin_course_booking_edit(request, booking_id):
         if action == 'remove_student':
             cs_id = request.POST.get('cs_id')
             try:
-                cs = CourseBookingStudent.objects.get(id=cs_id, booking=booking)
+                cs = BookingStudent.objects.get(id=cs_id, booking=booking)
                 student = cs.student
                 hours = cs.class_hours
                 
@@ -725,7 +726,7 @@ def admin_course_booking_edit(request, booking_id):
                 
                 cs.delete()
                 messages.success(request, f'已移除学员 {student.name}，退还 {hours} 课时')
-            except CourseBookingStudent.DoesNotExist:
+            except BookingStudent.DoesNotExist:
                 messages.error(request, '操作失败')
         
         elif action == 'add_students':
@@ -773,7 +774,7 @@ def admin_course_booking_edit(request, booking_id):
                     student.total_class_hours -= hours
                     student.save()
                     
-                    CourseBookingStudent.objects.create(
+                    BookingStudent.objects.create(
                         booking=booking,
                         student=student,
                         class_hours=hours
@@ -838,7 +839,7 @@ def admin_course_booking_delete(request, booking_id):
         messages.error(request, '您没有权限访问此页面')
         return redirect('court_list')
     
-    booking = get_object_or_404(CourseBooking, id=booking_id)
+    booking = get_object_or_404(Booking, id=booking_id, booking_type='course')
     
     if booking.status == 'active':
         for cs in booking.students.all():

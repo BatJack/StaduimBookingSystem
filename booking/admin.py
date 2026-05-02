@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Court, CourtAvailability, Booking, Student, CourseBooking, CourseBookingStudent
+from .models import Court, CourtAvailability, Booking, Student, BookingStudent
 
 
 @admin.register(Court)
@@ -38,11 +38,11 @@ class CourtAvailabilityAdmin(admin.ModelAdmin):
 
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
-    list_display = ['user', 'court', 'date', 'start_time', 'end_time', 'status', 'created_at']
-    list_filter = ['court', 'date', 'status']
-    search_fields = ['user__username', 'court__name']
+    list_display = ['booking_type', 'user', 'court', 'date', 'start_time', 'end_time', 'booker_name', 'status', 'created_at']
+    list_filter = ['booking_type', 'court', 'date', 'status']
+    search_fields = ['user__username', 'court__name', 'booker_name']
     date_hierarchy = 'date'
-    readonly_fields = ['user', 'court', 'date', 'start_time', 'end_time', 'status', 'created_at', 'updated_at']
+    readonly_fields = ['booking_type', 'user', 'court', 'date', 'start_time', 'end_time', 'booker_name', 'booker_phone', 'status', 'created_at', 'updated_at']
 
     def has_add_permission(self, request):
         return False
@@ -71,25 +71,8 @@ class StudentAdmin(admin.ModelAdmin):
         return False
 
 
-@admin.register(CourseBooking)
-class CourseBookingAdmin(admin.ModelAdmin):
-    list_display = ['court', 'date', 'start_time', 'end_time', 'status', 'created_at']
-    list_filter = ['court', 'date', 'status']
-    date_hierarchy = 'date'
-    readonly_fields = ['court', 'date', 'start_time', 'end_time', 'status', 'created_at', 'updated_at']
-
-    def has_add_permission(self, request):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-
-@admin.register(CourseBookingStudent)
-class CourseBookingStudentAdmin(admin.ModelAdmin):
+@admin.register(BookingStudent)
+class BookingStudentAdmin(admin.ModelAdmin):
     list_display = ['booking', 'student', 'class_hours', 'created_at']
     list_filter = ['booking']
     readonly_fields = ['booking', 'student', 'class_hours', 'created_at']
