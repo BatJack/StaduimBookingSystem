@@ -551,5 +551,184 @@ sudo ufw enable
 
 ---
 
-*文档版本：1.0*
-*最后更新：2026-05-02*
+
+---
+
+## 附录：配置 DuckDNS 动态域名和 SSL 证书
+
+### 第一步：注册 DuckDNS
+
+1. 访问 https://www.duckdns.org/
+2. 使用 Google/GitHub/Reddit 账号登录
+3. 在 "domains" 区域输入你想要的子域名（如 `staduimbookingsystem`）
+4. 点击 "add domain"
+5. 复制页面顶部的 Token，保存备用
+
+### 第二步：创建 DuckDNS 更新脚本
+
+```bash
+mkdir -p ~/duckdns
+nano ~/duckdns/update.sh
+```
+
+输入以下内容（替换为你的域名和token）：
+
+```bash
+#!/bin/bash
+echo url="https://www.duckdns.org/update?domains=staduimbookingsystem&token=你的token&ipv6=true" | curl -k -o ~/duckdns/duck.log -K -
+```
+
+保存退出，然后：
+
+```bash
+chmod 700 ~/duckdns/update.sh
+```
+
+### 第三步：手动测试更新
+
+```bash
+~/duckdns/update.sh
+cat ~/duckdns/duck.log
+```
+
+应该返回 `OK`。
+
+### 第四步：设置定时更新（每5分钟）
+
+```bash
+crontab -e
+```
+
+添加：
+
+```
+*/5 * * * * ~/duckdns/update.sh >/dev/null 2>&1
+```
+
+### 第五步：验证 DNS 解析
+
+```bash
+nslookup staduimbookingsystem.duckdns.org
+```
+
+### 第六步：安装 certbot 和 DuckDNS 插件
+
+```bash
+source ~/StaduimBookingSystem/django/bin/activate
+pip install certbot certbot-dns-duckdns
+```
+
+### 第七步：创建 DNS 验证配置
+
+```bash
+mkdir -p ~/.secrets/certbot
+chmod 700 ~/.secrets/certbot
+nano ~/.secrets/certbot/duckdns.ini
+```
+
+输入：
+
+```ini
+dns_duckdns_token = 你的DuckDNS-token
+```
+
+保存退出，然后：
+
+```bash
+chmod 600 ~/.secrets/certbot/duckdns.ini
+```
+
+### 第八步：创建 certbot 工作目录
+
+```bash
+mkdir -p ~/.certbot/etc ~/.certbot/var ~/.certbot/log
+chmod 755 ~/.certbot/etc ~/.certbot/var ~/.certbot/log
+```
+
+### 第九步：申请 SSL 证书
+
+```bash
+source ~/StaduimBookingSystem/django/bin/activate && certbot certonly --authenticator dns-duckdns --dns-duckdns-credentials ~/.secrets/certbot/duckdns.ini -d staduimbookingsystem.duckdns.org --preferred-challenges dns-01 --config-dir ~/.certbot/etc --work-dir ~/.certbot/var --logs-dir ~/.certbot/log
+```
+
+### 第十步：配置 Nginx SSL
+
+编辑 Nginx 配置：
+
+```bash
+sudo nano /etc/nginx/sites-available/stadium-booking
+```
+
+```nginx
+server {
+    listen 8443 ssl;
+    listen [::]:8443 ssl;
+    server_name staduimbookingsystem.duckdns.org;
+
+    ssl_certificate /home/pi/.certbot/etc/live/staduimbookingsystem.duckdns.org/fullchain.pem;
+    ssl_certificate_key /home/pi/.certbot/etc/live/staduimbookingsystem.duckdns.org/privkey.pem;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    location /static/ {
+        alias /home/pi/StaduimBookingSystem/staticfiles/;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+**重要**：将 `pi` 替换为你的实际用户名。
+
+测试并重启：
+
+```bash
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+### 第十一步：设置证书自动续期
+
+```bash
+sudo crontab -e
+```
+
+添加：
+
+```
+0 3 * * * source /home/pi/StaduimBookingSystem/django/bin/activate && certbot renew --authenticator dns-duckdns --dns-duckdns-credentials /home/pi/.secrets/certbot/duckdns.ini --config-dir /home/pi/.certbot/etc --work-dir /home/pi/.certbot/var --logs-dir /home/pi/.certbot/log --quiet && systemctl reload nginx
+```
+
+### 第十二步：路由器端口映射
+
+1. 登录路由器管理页面（通常是 `192.168.1.1` 或 `192.168.0.1`）
+2. 找到 "端口转发" / "NAT" / "虚拟服务器"
+3. 添加规则：
+
+| 设置项 | 值 |
+|--------|-----|
+| 规则名称 | Stadium Booking |
+| 外部端口 | 8443 |
+| 内部端口 | 8443 |
+| 内部IP | 树莓派IP（如 `192.168.1.100`） |
+| 协议 | TCP |
+
+### 第十三步：测试外网访问
+
+在**手机4G网络**或**非同一WiFi**的设备上访问：
+
+```
+https://staduimbookingsystem.duckdns.org:8443/
+```
+
+
+*文档版本：1.1*
+*最后更新：2026-05-04*
