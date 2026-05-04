@@ -7,12 +7,14 @@
 ## 系统功能
 
 ### 用户功能
+
 - 矩阵式场地预约界面（横向：场地，纵向：时间段）
 - 预约时间以半小时为单位
 - 预约时填写预约人姓名和联系方式
 - 查看和取消自己的预约
 
 ### 管理员功能
+
 - **管理后台**：仪表盘式管理界面，简洁商务风格
 - **场地管理**：增删改场地
 - **可用时间段管理**：设置场地可预约的日期范围和每天开放时间
@@ -26,12 +28,15 @@
 ## 界面预览
 
 ### 登录页面
+
 ![登录页面](assets/login.png)
 
 ### 创建用户
+
 ![创建用户](assets/create_user.png)
 
 ### 场地预约（矩阵式）
+
 ![场地预约](assets/book_court.png)
 
 ---
@@ -52,6 +57,7 @@
 ### 第二步：安装Django
 
 在命令提示符中执行：
+
 ```
 pip install django
 ```
@@ -76,17 +82,20 @@ pip install django
 ### 第五步：创建用户
 
 在项目目录下执行：
+
 ```
 python create_user.py
 ```
 
 运行后选择用户类型：
+
 - **管理员**：可访问管理后台，管理场地、时间段、预约、学员、课程
 - **普通用户**：可预约场地、查看和取消自己的预约
 
 ### 第六步：启动系统
 
 在项目目录下执行：
+
 ```
 python manage.py runserver
 ```
@@ -147,7 +156,8 @@ python manage.py makemigrations
 python manage.py migrate
 
 # 创建用户（支持管理员/普通用户）
-python create_user.py
+(Windows)python create_user.py
+(Linux)python manage.py create_user_cli.py
 ```
 
 ---
@@ -155,40 +165,55 @@ python create_user.py
 ## 局域网访问
 
 ### 启动服务器
+
 ```
 python manage.py runserver 0.0.0.0:8000
 ```
 
+### 在Linux下使用gunicorn启动服务器
+
+在根目录下执行以下命令：
+
+```
+gunicorn --bind 0.0.0.0:8000 stadium_booking.wsgi:application
+```
+
 ### 关闭防火墙（需要管理员权限）
-双击项目根目录下的 `关闭防火墙.bat` 文件
+
+(Windows)netsh advfirewall set allprofiles state off
 
 ### 开启防火墙（恢复）
-双击项目根目录下的 `开启防火墙.bat` 文件
+
+(Windows)netsh advfirewall set allprofiles state on
 
 ### 访问地址
+
 在同一 WiFi 下的设备上，使用本机的局域网 IP 访问：
+
 ```
 http://<你的局域网IP>:8000
 ```
 
 查看本机局域网 IP：
+
 ```
 ipconfig
 ```
+
 找到 **无线局域网适配器 WLAN** 下的 **IPv4 地址** 即可。
 
 ---
 
 ## 数据库模型
 
-| 模型 | 说明 |
-|------|------|
-| Profile | 用户类型（管理员/普通用户） |
-| Student | 学员信息（姓名、电话、课时） |
-| Court | 场地信息 |
-| CourtAvailability | 场地可用时间段 |
-| Booking | 预约记录（场地预约/课程预约） |
-| BookingStudent | 课程预约关联的学员 |
+| 模型              | 说明                          |
+| ----------------- | ----------------------------- |
+| Profile           | 用户类型（管理员/普通用户）   |
+| Student           | 学员信息（姓名、电话、课时）  |
+| Court             | 场地信息                      |
+| CourtAvailability | 场地可用时间段                |
+| Booking           | 预约记录（场地预约/课程预约） |
+| BookingStudent    | 课程预约关联的学员            |
 
 ---
 
