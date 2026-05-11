@@ -19,6 +19,7 @@
         </div>
     </div>
 
+    <div id="booking-summary-overlay" class="booking-summary-overlay"></div>
     <div id="booking-summary" class="booking-summary">
         <h4>📋 预约确认</h4>
         <p id="booking-info"></p>
@@ -237,30 +238,64 @@
             color: #6b7280;
         }
         .booking-summary {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
             background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-            border-radius: 16px;
-            padding: 24px;
-            margin-top: 24px;
+            border-radius: 16px 16px 0 0;
+            padding: 20px 24px;
             display: none;
             border: 1px solid #93c5fd;
+            border-bottom: none;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s ease;
+            max-height: 35vh;
+            overflow-y: auto;
         }
         .booking-summary.show {
+            display: block;
+            opacity: 1;
+        }
+        .booking-summary-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 999;
+        }
+        .booking-summary-overlay.show {
             display: block;
         }
         .booking-summary h4 {
             color: #1e40af;
             margin-bottom: 12px;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
         }
         .booking-summary p {
             color: #1e3a8a;
-            margin-bottom: 20px;
-            font-size: 15px;
+            margin-bottom: 16px;
+            font-size: 14px;
         }
         .booking-actions {
             display: flex;
             gap: 12px;
+            justify-content: center;
+        }
+        .booking-summary .btn-cancel {
+            background: white;
+            color: #ef4444;
+            border: 1px solid #fca5a5;
+        }
+        .booking-summary .btn-cancel:hover {
+            background: #fef2f2;
+            border-color: #ef4444;
         }
         .btn-confirm {
             padding: 14px 32px;
@@ -706,7 +741,7 @@
             const startTime = sortedSlots[0].start;
             const lastSlot = sortedSlots[sortedSlots.length - 1];
             const courtName = sortedSlots[0].courtName;
-            
+
             let totalMinutes = 0;
             sortedSlots.forEach(slot => {
                 const [sh, sm] = slot.start.split(':').map(Number);
@@ -720,7 +755,7 @@
             if (hours > 0) duration += `${hours}小时`;
             if (minutes > 0) duration += `${minutes}分钟`;
 
-            info.innerHTML = `已选择 <strong>${courtName}</strong>，日期：<strong>${formatDate(currentDate)}</strong>，时间：<strong>${startTime} - ${lastSlot.end}</strong>，共 <strong>${duration}</strong>`;
+            info.innerHTML = `已选择 <strong>${courtName}</strong>，日期：<strong>${formatDate(currentDate)}</strong>，时间：<strong>${startTime} - ${lastSlot.end}</strong>，共 <strong>${duration}</strong>，<strong>${selectedSlots.length}</strong> 个时段`;
         }
 
         function cancelSelection() {
@@ -747,6 +782,7 @@
                 return;
             }
 
+            document.getElementById('booking-summary').classList.remove('show');
             document.getElementById('booking-modal').classList.add('show');
             document.getElementById('modal-booker-name').value = '';
             document.getElementById('modal-booker-phone').value = '';
@@ -755,6 +791,9 @@
 
         function closeBookingModal() {
             document.getElementById('booking-modal').classList.remove('show');
+            if (selectedSlots.length > 0) {
+                document.getElementById('booking-summary').classList.add('show');
+            }
         }
 
         function submitBooking() {

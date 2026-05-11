@@ -76,7 +76,7 @@
         }
         .nav {
             display: flex;
-            gap: 4px;
+            gap: 8px;
         }
         .nav a {
             color: rgba(255, 255, 255, 0.9);
@@ -86,13 +86,25 @@
             font-size: 14px;
             font-weight: 500;
             transition: var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
         .nav a:hover {
             background-color: rgba(255, 255, 255, 0.15);
             color: white;
+            border-color: rgba(255, 255, 255, 0.5);
         }
         .nav a.active {
             background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        .nav .btn-logout {
+            background-color: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.5);
+            color: #FCA5A5;
+        }
+        .nav .btn-logout:hover {
+            background-color: rgba(239, 68, 68, 0.4);
+            border-color: #EF4444;
             color: white;
         }
         .container {
@@ -665,10 +677,12 @@
                 font-size: 16px;
             }
             .nav {
-                gap: 2px;
+                gap: 4px;
+                flex-wrap: wrap;
+                justify-content: center;
             }
             .nav a {
-                padding: 6px 10px;
+                padding: 6px 12px;
                 font-size: 12px;
             }
             .container {
@@ -823,8 +837,11 @@
             .header h1 {
                 font-size: 14px;
             }
+            .nav {
+                gap: 4px;
+            }
             .nav a {
-                padding: 4px 8px;
+                padding: 6px 10px;
                 font-size: 11px;
             }
             .container {
@@ -850,7 +867,7 @@
                     {% if user.profile.user_type == 'admin' %}
                         <a href="{% url 'admin_dashboard' %}">管理后台</a>
                     {% endif %}
-                    <a href="{% url 'logout' %}">退出登录</a>
+                    <a href="{% url 'logout' %}" class="btn-logout">退出登录</a>
                 {% else %}
                     <a href="{% url 'login' %}">登录</a>
                 {% endif %}
