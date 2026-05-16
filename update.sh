@@ -1,7 +1,8 @@
 #!/bin/bash
 
-PROJECT_DIR="/home/jackson/StaduimBookingSystem"
-VENV_PATH="/home/jackson/StaduimBookingSystem/django"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$SCRIPT_DIR"
+VENV_PATH="$SCRIPT_DIR/django"
 SETTINGS_MODULE="stadium_booking.settings_production"
 
 echo "=========================================="
@@ -32,7 +33,7 @@ python manage.py collectstatic --settings=$SETTINGS_MODULE --noinput || { echo "
 
 echo ""
 echo "[6/6] 重启服务..."
-sudo systemctl restart stadium-booking && echo "  ✓ Stadium Booking System 重启成功" || { echo "  ✗ Stadium Booking System 重启失败"; }
+sudo systemctl restart gunicorn && echo "  ✓ Gunicorn 重启成功" || { echo "  ✗ Gunicorn 重启失败"; }
 sudo systemctl restart nginx && echo "  ✓ Nginx 重启成功" || { echo "  ✗ Nginx 重启失败"; }
 
 echo ""
@@ -41,7 +42,7 @@ echo "更新完成！"
 echo "=========================================="
 echo ""
 echo "服务状态:"
-sudo systemctl status stadium-booking --no-pager -l | head -3
+sudo systemctl status gunicorn --no-pager -l | head -3
 sudo systemctl status nginx --no-pager -l | head -3
 echo ""
-echo "查看日志: sudo journalctl -u stadium-booking -f"
+echo "查看日志: sudo journalctl -u gunicorn -f"
