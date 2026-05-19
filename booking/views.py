@@ -80,14 +80,25 @@ def admin_dashboard(request):
         messages.error(request, '您没有权限访问此页面')
         return redirect('court_list')
     
+    return render(request, 'booking/admin_dashboard.html')
+
+
+@login_required
+def admin_statistics(request):
+    if not is_admin_user(request.user):
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
     courts_count = Court.objects.count()
     bookings_count = Booking.objects.count()
     availabilities_count = CourtAvailability.objects.count()
+    students_count = Student.objects.count()
     
-    return render(request, 'booking/admin_dashboard.html', {
+    return render(request, 'booking/admin_statistics.html', {
         'courts_count': courts_count,
         'bookings_count': bookings_count,
-        'availabilities_count': availabilities_count
+        'availabilities_count': availabilities_count,
+        'students_count': students_count
     })
 
 
