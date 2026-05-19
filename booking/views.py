@@ -8,6 +8,38 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST, require_GET
 from datetime import datetime, timedelta, time
 from .models import Court, CourtAvailability, Booking, Profile, Student, BookingStudent
+import socket
+import struct
+
+
+def get_network_time():
+    try:
+        ntp_servers = ['time.windows.com', 'time.nist.gov', 'pool.ntp.org']
+        for server in ntp_servers:
+            try:
+                client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                client.settimeout(3)
+                data = b'\x1b' + 47 * b'\x00'
+                client.sendto(data, (server, 123))
+                response, _ = client.recvfrom(1024)
+                client.close()
+                
+                if response:
+                    unpacked = struct.unpack('!12I', response[:48])
+                    timestamp = unpacked[10] - 2208988800
+                    return datetime.fromtimestamp(timestamp, tz=timezone.get_current_timezone())
+            except Exception:
+                continue
+    except Exception:
+        pass
+    return None
+
+
+def get_current_time():
+    network_time = get_network_time()
+    if network_time:
+        return network_time
+    return timezone.now()
 
 
 def is_admin_user(user):
@@ -461,8 +493,13 @@ def get_time_slots(request):
                 current_time += timedelta(minutes=30)
         
         data.append(court_data)
-    
-    return JsonResponse({'courts': data})
+
+    now = get_current_time()
+    return JsonResponse({
+        'courts': data,
+        'server_time': now.strftime('%Y-%m-%d %H:%M:%S'),
+        'server_date': now.strftime('%Y-%m-%d'),
+    })
 
 
 @login_required

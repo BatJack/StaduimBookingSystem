@@ -65,6 +65,10 @@
             <div class="legend-dot selected"></div>
             <span>已选择</span>
         </div>
+        <div class="legend-item">
+            <div class="legend-dot past"></div>
+            <span>已过时</span>
+        </div>
     </div>
 
     <style>
@@ -188,6 +192,27 @@
         }
         .time-cell.booked .slot-phone:hover {
             opacity: 1;
+        }
+        .time-cell.past {
+            background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+            color: #9ca3af;
+            border: 1px solid #d1d5db;
+            cursor: not-allowed;
+            display: flex;
+            flex-direction: column;
+            padding: 6px 8px;
+        }
+        .time-cell.past:hover {
+            transform: none;
+            box-shadow: none;
+        }
+        .time-cell.past .slot-label {
+            font-size: 11px;
+            opacity: 0.6;
+        }
+        .time-cell.past .slot-status {
+            font-size: 11px;
+            opacity: 0.6;
         }
         .time-cell.selected {
             background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
@@ -360,6 +385,10 @@
             background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
             border: 2px solid #4338ca;
         }
+        .legend-dot.past {
+            background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+            border: 2px solid #d1d5db;
+        }
         .info-banner {
             display: flex;
             align-items: center;
@@ -507,6 +536,8 @@
         let selectedCourtId = null;
         let currentDate = null;
         let courtsData = [];
+        let serverTime = null;
+        let serverDate = null;
         const isAdmin = {{ is_admin|yesno:"true,false" }};
         const adminBookingEditUrl = "{% url 'admin_booking_edit' 0 %}";
         const adminCourseBookingEditUrl = "{% url 'admin_course_booking_edit' 0 %}";
@@ -517,6 +548,24 @@
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
             return `${year}年${month}月${day}日`;
+        }
+
+        function isSlotPast(slotEndTime) {
+            if (!serverTime || !serverDate || !currentDate) {
+                return false;
+            }
+            
+            if (currentDate !== serverDate) {
+                return false;
+            }
+            
+            const [endHour, endMinute] = slotEndTime.split(':').map(Number);
+            const [serverHour, serverMinute] = serverTime.split(' ')[1].split(':').map(Number);
+            
+            const endMinutes = endHour * 60 + endMinute;
+            const currentMinutes = serverHour * 60 + serverMinute;
+            
+            return endMinutes <= currentMinutes;
         }
 
         function loadTimeSlots() {
@@ -536,6 +585,8 @@
                 .then(response => response.json())
                 .then(data => {
                     courtsData = data.courts || [];
+                    serverTime = data.server_time || null;
+                    serverDate = data.server_date || null;
                     renderMatrix(courtsData);
                 })
                 .catch(error => {
@@ -602,14 +653,21 @@
 
             html += '<tbody>';
             allTimeSlots.forEach(slot => {
+                const isPast = isSlotPast(slot.end);
+                
                 html += '<tr>';
                 html += `<td>${slot.start}<br><span style="font-size:11px;color:#9ca3af">${slot.end}</span></td>`;
 
                 availableCourts.forEach(court => {
                     const courtSlot = court.time_slots.find(s => s.start === slot.start && s.end === slot.end);
                     const isBooked = courtSlot ? courtSlot.is_booked : true;
-                    const statusClass = isBooked ? 'booked' : 'available';
-                    const statusText = isBooked ? '已满' : '可预约';
+                    let statusClass = isBooked ? 'booked' : 'available';
+                    let statusText = isBooked ? '已满' : '可预约';
+                    
+                    if (isPast && !isBooked) {
+                        statusClass = 'past';
+                        statusText = '已过时';
+                    }
 
                     if (!court.is_available) {
                         html += `<td><div class="time-cell no-court"><span class="slot-label">-</span></div></td>`;
@@ -664,13 +722,14 @@
                             </div></td>`;
                         }
                     } else {
+                        const clickHandler = isPast ? '' : 'onclick="toggleSlot(this)"';
                         html += `<td><div class="time-cell ${statusClass}"
                             data-court-id="${court.id}"
                             data-court-name="${court.name}"
                             data-start="${slot.start}"
                             data-end="${slot.end}"
                             data-booked="false"
-                            onclick="toggleSlot(this)">
+                            ${clickHandler}>
                             <span class="slot-label">${slot.start}</span>
                             <span class="slot-status">${statusText}</span>
                         </div></td>`;
@@ -685,7 +744,7 @@
         }
 
         function toggleSlot(element) {
-            if (element.classList.contains('booked') || element.classList.contains('no-court')) {
+            if (element.classList.contains('booked') || element.classList.contains('no-court') || element.classList.contains('past')) {
                 return;
             }
 
