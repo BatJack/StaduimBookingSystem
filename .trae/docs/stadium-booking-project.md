@@ -87,7 +87,8 @@ StaduimBookingSystem/
         ├── login.html             # 登录页
         ├── court_list.html        # 场地列表 (矩阵式预约界面)
         ├── my_bookings.html       # 我的预约
-        ├── admin_dashboard.html    # 管理后台首页 (仪表盘)
+        ├── admin_dashboard.html    # 管理后台首页 (功能入口)
+        ├── admin_statistics.html   # 数据统计页面
         ├── admin_court_list.html   # 场地管理列表
         ├── admin_court_form.html   # 添加/编辑场地
         ├── admin_availability_list.html  # 时间段管理
@@ -208,6 +209,7 @@ StaduimBookingSystem/
 | `/my-bookings/` | `my_bookings` | GET | 我的预约 |
 | `/cancel-booking/<id>/` | `cancel_booking` | GET | 取消预约 |
 | `/manage/` | `admin_dashboard` | GET | 管理后台首页 |
+| `/manage/statistics/` | `admin_statistics` | GET | 数据统计页面 |
 | `/manage/courts/` | `admin_court_list` | GET | 场地管理列表 |
 | `/manage/courts/add/` | `admin_court_add` | GET/POST | 添加场地 |
 | `/manage/courts/edit/<id>/` | `admin_court_edit` | GET/POST | 编辑场地 |
@@ -424,6 +426,7 @@ base.html (基础模板，含响应式CSS)
 ├── my_bookings.html
 └── admin_*.html         (管理后台)
     ├── admin_dashboard.html
+    ├── admin_statistics.html
     ├── admin_court_list.html
     ├── admin_court_form.html
     ├── admin_availability_list.html

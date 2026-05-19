@@ -62,6 +62,10 @@ base.html
    ├── my_bookings.html     # User bookings
    ├── login.html           # Login page
    └── admin_*.html         # Admin pages (under /manage/ paths)
+       ├── admin_dashboard.html    # Admin dashboard (function entry)
+       ├── admin_statistics.html   # Statistics page
+       ├── admin_court_list.html
+       └── ...
 ```
 
 ### Editing Rules
