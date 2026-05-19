@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST, require_GET
 from datetime import datetime, timedelta, time
-from .models import Court, CourtAvailability, Booking, Profile, Student, BookingStudent
+from .models import Court, CourtAvailability, Booking, Profile, Student, BookingStudent, CourtType
 import socket
 import struct
 
@@ -140,8 +140,9 @@ def admin_court_list(request):
         messages.error(request, '您没有权限访问此页面')
         return redirect('court_list')
     
-    courts = Court.objects.all()
-    return render(request, 'booking/admin_court_list.html', {'courts': courts})
+    courts = Court.objects.select_related('court_type').all()
+    court_types = CourtType.objects.all()
+    return render(request, 'booking/admin_court_list.html', {'courts': courts, 'court_types': court_types})
 
 
 @login_required
@@ -153,12 +154,27 @@ def admin_court_add(request):
     if request.method == 'POST':
         name = request.POST.get('name')
         description = request.POST.get('description')
+        court_type_id = request.POST.get('court_type')
+        court_number = request.POST.get('court_number', '')
         
-        Court.objects.create(name=name, description=description)
+        court_type = None
+        if court_type_id:
+            try:
+                court_type = CourtType.objects.get(id=court_type_id)
+            except CourtType.DoesNotExist:
+                pass
+        
+        Court.objects.create(
+            name=name,
+            description=description,
+            court_type=court_type,
+            court_number=court_number
+        )
         messages.success(request, '场地添加成功')
         return redirect('admin_court_list')
     
-    return render(request, 'booking/admin_court_form.html')
+    court_types = CourtType.objects.all()
+    return render(request, 'booking/admin_court_form.html', {'court_types': court_types})
 
 
 @login_required
@@ -172,11 +188,23 @@ def admin_court_edit(request, court_id):
     if request.method == 'POST':
         court.name = request.POST.get('name')
         court.description = request.POST.get('description')
+        court_type_id = request.POST.get('court_type')
+        court.court_number = request.POST.get('court_number', '')
+        
+        if court_type_id:
+            try:
+                court.court_type = CourtType.objects.get(id=court_type_id)
+            except CourtType.DoesNotExist:
+                court.court_type = None
+        else:
+            court.court_type = None
+        
         court.save()
         messages.success(request, '场地更新成功')
         return redirect('admin_court_list')
     
-    return render(request, 'booking/admin_court_form.html', {'court': court})
+    court_types = CourtType.objects.all()
+    return render(request, 'booking/admin_court_form.html', {'court': court, 'court_types': court_types})
 
 
 @login_required
@@ -189,6 +217,66 @@ def admin_court_delete(request, court_id):
     court.delete()
     messages.success(request, '场地删除成功')
     return redirect('admin_court_list')
+
+
+@login_required
+def admin_court_type_list(request):
+    if not is_admin_user(request.user):
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    court_types = CourtType.objects.prefetch_related('courts').all()
+    return render(request, 'booking/admin_court_type_list.html', {'court_types': court_types})
+
+
+@login_required
+def admin_court_type_add(request):
+    if not is_admin_user(request.user):
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        if name:
+            CourtType.objects.create(name=name)
+            messages.success(request, '场地类型添加成功')
+        return redirect('admin_court_type_list')
+    
+    return render(request, 'booking/admin_court_type_form.html')
+
+
+@login_required
+def admin_court_type_edit(request, type_id):
+    if not is_admin_user(request.user):
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    court_type = get_object_or_404(CourtType, id=type_id)
+    
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        if name:
+            court_type.name = name
+            court_type.save()
+            messages.success(request, '场地类型更新成功')
+        return redirect('admin_court_type_list')
+    
+    return render(request, 'booking/admin_court_type_form.html', {'court_type': court_type})
+
+
+@login_required
+def admin_court_type_delete(request, type_id):
+    if not is_admin_user(request.user):
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    court_type = get_object_or_404(CourtType, id=type_id)
+    if court_type.is_default:
+        messages.error(request, '系统默认类型不能删除')
+    else:
+        court_type.delete()
+        messages.success(request, '场地类型删除成功')
+    return redirect('admin_court_type_list')
 
 
 @login_required
