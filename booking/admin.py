@@ -1,13 +1,20 @@
 from django.contrib import admin
-from .models import Court, CourtAvailability, Booking, Student, BookingStudent
+from .models import Court, CourtAvailability, Booking, Student, BookingStudent, CourtType, Profile
+
+
+@admin.register(CourtType)
+class CourtTypeAdmin(admin.ModelAdmin):
+    list_display = ['name', 'is_default', 'created_at', 'updated_at']
+    list_filter = ['is_default']
+    search_fields = ['name']
 
 
 @admin.register(Court)
 class CourtAdmin(admin.ModelAdmin):
-    list_display = ['name', 'description', 'created_at', 'updated_at']
-    search_fields = ['name']
-    list_filter = ['created_at']
-    readonly_fields = ['name', 'description', 'created_at', 'updated_at']
+    list_display = ['name', 'court_type', 'court_number', 'description', 'created_at', 'updated_at']
+    search_fields = ['name', 'court_number']
+    list_filter = ['court_type', 'created_at']
+    readonly_fields = ['name', 'court_type', 'court_number', 'description', 'created_at', 'updated_at']
 
     def has_add_permission(self, request):
         return False
@@ -85,3 +92,10 @@ class BookingStudentAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ['user', 'user_type', 'created_at', 'updated_at']
+    list_filter = ['user_type']
+    search_fields = ['user__username']

@@ -37,8 +37,25 @@ class Student(models.Model):
         return f'{self.name} - {self.phone}'
 
 
+class CourtType(models.Model):
+    name = models.CharField(max_length=50, unique=True, verbose_name='场地类型名称')
+    is_default = models.BooleanField(default=False, verbose_name='系统默认类型')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+
+    class Meta:
+        verbose_name = '场地类型'
+        verbose_name_plural = '场地类型'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
 class Court(models.Model):
+    court_type = models.ForeignKey(CourtType, on_delete=models.PROTECT, related_name='courts', verbose_name='场地类型', null=True, blank=True)
     name = models.CharField(max_length=100, verbose_name='场地名称')
+    court_number = models.CharField(max_length=20, blank=True, verbose_name='场地编号')
     description = models.TextField(blank=True, verbose_name='场地描述')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
@@ -46,9 +63,11 @@ class Court(models.Model):
     class Meta:
         verbose_name = '场地'
         verbose_name_plural = '场地'
-        ordering = ['id']
+        ordering = ['court_type__name', 'court_number', 'id']
 
     def __str__(self):
+        if self.court_type and self.court_number:
+            return f'{self.court_type.name} - {self.court_number}'
         return self.name
 
 
