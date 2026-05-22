@@ -515,6 +515,8 @@ def get_time_slots(request):
         court_data = {
             'id': court.id,
             'name': court.name,
+            'court_number': court.court_number,
+            'court_type_name': court.court_type.name if court.court_type else None,
             'description': court.description,
             'is_available': availability is not None,
             'start_time': availability.start_time.strftime('%H:%M') if availability else None,

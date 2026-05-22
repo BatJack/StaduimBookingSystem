@@ -13,6 +13,10 @@
         <input type="date" id="booking-date" min="{{ today|date:'Y-m-d' }}" value="{{ today|date:'Y-m-d' }}">
     </div>
 
+    <div id="court-type-filter" class="court-type-filter">
+        <button class="filter-btn active" data-type="all">全部场地</button>
+    </div>
+
     <div id="booking-matrix-container">
         <div class="no-availability">
             <p>请选择日期查看可用场地</p>
@@ -72,6 +76,34 @@
     </div>
 
     <style>
+        .court-type-filter {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 16px;
+            background: white;
+            border: 3px solid #ecf0f1;
+        }
+        .filter-btn {
+            padding: 10px 20px;
+            background: #ecf0f1;
+            color: #2c3e50;
+            border: 3px solid #bdc3c7;
+            border-radius: 0;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .filter-btn:hover {
+            background: #bdc3c7;
+        }
+        .filter-btn.active {
+            background: #3498db;
+            color: white;
+            border-color: #2980b9;
+        }
         .matrix-wrapper {
             background: white;
             border-radius: 0;
@@ -516,6 +548,7 @@
         let courtsData = [];
         let serverTime = null;
         let serverDate = null;
+        let currentFilterType = 'all';
         const isAdmin = {{ is_admin|yesno:"true,false" }};
         const adminBookingEditUrl = "{% url 'admin_booking_edit' 0 %}";
         const adminCourseBookingEditUrl = "{% url 'admin_course_booking_edit' 0 %}";
@@ -546,6 +579,39 @@
             return endMinutes <= currentMinutes;
         }
 
+        function updateFilterButtons() {
+            const filterContainer = document.getElementById('court-type-filter');
+            const typeSet = new Set();
+            
+            courtsData.forEach(court => {
+                if (court.is_available && court.court_type_name) {
+                    typeSet.add(court.court_type_name);
+                }
+            });
+            
+            let html = '<button class="filter-btn ' + (currentFilterType === 'all' ? 'active' : '') + '" data-type="all">全部场地</button>';
+            
+            const sortedTypes = Array.from(typeSet).sort();
+            sortedTypes.forEach(type => {
+                const isActive = currentFilterType === type ? 'active' : '';
+                html += `<button class="filter-btn ${isActive}" data-type="${type}">${type}</button>`;
+            });
+            
+            filterContainer.innerHTML = html;
+            
+            filterContainer.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    filterContainer.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentFilterType = this.dataset.type;
+                    selectedSlots = [];
+                    selectedCourtId = null;
+                    updateBookingSummary();
+                    renderMatrix(courtsData);
+                });
+            });
+        }
+
         function loadTimeSlots() {
             const dateInput = document.getElementById('booking-date');
             const selectedDate = dateInput.value;
@@ -555,6 +621,7 @@
             currentDate = selectedDate;
             selectedSlots = [];
             selectedCourtId = null;
+            currentFilterType = 'all';
             updateBookingSummary();
 
             const url = `{% url 'get_time_slots' %}?date=${selectedDate}`;
@@ -565,6 +632,7 @@
                     courtsData = data.courts || [];
                     serverTime = data.server_time || null;
                     serverDate = data.server_date || null;
+                    updateFilterButtons();
                     renderMatrix(courtsData);
                 })
                 .catch(error => {
@@ -582,16 +650,21 @@
                 return;
             }
 
-            const availableCourts = courts.filter(c => c.is_available);
-            if (availableCourts.length === 0) {
-                container.innerHTML = '<div class="no-availability"><div class="icon">?</div><p>该日期暂无开放的场地</p></div>';
+            let filteredCourts = courts.filter(c => c.is_available);
+            
+            if (currentFilterType !== 'all') {
+                filteredCourts = filteredCourts.filter(c => c.court_type_name === currentFilterType);
+            }
+            
+            if (filteredCourts.length === 0) {
+                container.innerHTML = '<div class="no-availability"><div class="icon">?</div><p>该类型暂无开放的场地</p></div>';
                 return;
             }
 
             const allTimeSlots = [];
             const timeSet = new Set();
             
-            availableCourts.forEach(court => {
+            filteredCourts.forEach(court => {
                 if (court.time_slots && court.time_slots.length > 0) {
                     court.time_slots.forEach(slot => {
                         const key = `${slot.start}-${slot.end}`;
@@ -624,8 +697,9 @@
             
             html += '<thead><tr>';
             html += '<th class="time-header">时间</th>';
-            availableCourts.forEach(court => {
-                html += `<th class="court-header">${court.name}</th>`;
+            filteredCourts.forEach(court => {
+                const courtNumber = court.court_number ? ` - ${court.court_number}` : '';
+                html += `<th class="court-header">${court.name}${courtNumber}</th>`;
             });
             html += '</tr></thead>';
 
@@ -636,7 +710,7 @@
                 html += '<tr>';
                 html += `<td>${slot.start}<br><span style="font-size:11px;color:#9ca3af">${slot.end}</span></td>`;
 
-                availableCourts.forEach(court => {
+                filteredCourts.forEach(court => {
                     const courtSlot = court.time_slots.find(s => s.start === slot.start && s.end === slot.end);
                     const isBooked = courtSlot ? courtSlot.is_booked : true;
                     let statusClass = isBooked ? 'booked' : 'available';
