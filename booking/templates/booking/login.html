@@ -4,31 +4,74 @@
 
 {% block content %}
 <style>
-    @media (prefers-reduced-motion: reduce) {
-        *,
-        *::before,
-        *::after {
-            animation-duration: 0.01ms !important;
-            animation-iteration-count: 1 !important;
-            transition-duration: 0.01ms !important;
-        }
+    .flat-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #f5f5f5;
+        z-index: -1;
+    }
+
+    .flat-shape {
+        position: absolute;
+        z-index: 0;
+    }
+
+    .flat-shape.shape-1 {
+        width: 400px;
+        height: 400px;
+        background: #3498db;
+        top: -100px;
+        right: -100px;
+        border-radius: 50%;
+    }
+
+    .flat-shape.shape-2 {
+        width: 300px;
+        height: 300px;
+        background: #2ecc71;
+        bottom: -80px;
+        left: -80px;
+        border-radius: 50%;
+    }
+
+    .flat-shape.shape-3 {
+        width: 200px;
+        height: 200px;
+        background: #e74c3c;
+        top: 40%;
+        left: 10%;
+        transform: rotate(45deg);
+    }
+
+    .flat-shape.shape-4 {
+        width: 150px;
+        height: 150px;
+        background: #f39c12;
+        bottom: 30%;
+        right: 15%;
+        border-radius: 50%;
     }
 
     .login-container {
-        max-width: 440px;
-        margin: 60px auto;
-        padding: 0 20px;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        position: relative;
+        z-index: 1;
     }
 
     .login-card {
-        background: var(--bg-secondary);
-        border-radius: var(--radius-lg);
+        width: 100%;
+        max-width: 400px;
+        background: #ffffff;
         padding: 48px 40px;
-        box-shadow: var(--shadow-lg);
-        border: 1px solid var(--border-color);
-        animation: cardEntrance 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 0;
         position: relative;
-        overflow: hidden;
     }
 
     .login-card::before {
@@ -36,49 +79,26 @@
         position: absolute;
         top: 0;
         left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
-        animation: gradientShift 3s ease infinite;
-    }
-
-    @keyframes cardEntrance {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    @keyframes gradientShift {
-        0%, 100% {
-            background-position: 0% 50%;
-        }
-        50% {
-            background-position: 100% 50%;
-        }
+        width: 6px;
+        height: 100%;
+        background: #3498db;
     }
 
     .login-header {
-        text-align: center;
+        text-align: left;
         margin-bottom: 40px;
-        animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.1s both;
     }
 
     .login-header h2 {
         font-size: 32px;
         font-weight: 700;
-        color: var(--text-primary);
+        color: #2c3e50;
         margin-bottom: 8px;
-        font-family: 'Barlow Condensed', sans-serif;
-        letter-spacing: -0.02em;
+        letter-spacing: -0.5px;
     }
 
     .login-header p {
-        color: var(--text-muted);
+        color: #7f8c8d;
         font-size: 15px;
     }
 
@@ -89,62 +109,42 @@
     }
 
     .form-group {
-        animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
         position: relative;
-    }
-
-    .form-group:nth-child(1) {
-        animation-delay: 0.2s;
-    }
-
-    .form-group:nth-child(2) {
-        animation-delay: 0.3s;
-    }
-
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
     }
 
     .form-group label {
         display: block;
-        margin-bottom: 8px;
-        font-weight: 500;
-        color: var(--text-secondary);
-        font-size: 14px;
+        margin-bottom: 10px;
         font-weight: 600;
+        color: #2c3e50;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
-    .form-group input {
-        width: 100%;
-        padding: 14px 16px;
-        border: 2px solid var(--border-color);
-        border-radius: var(--radius);
-        font-size: 15px;
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        background-color: var(--bg-primary);
-        color: var(--text-primary);
-    }
-
-    .form-group input:focus {
-        outline: none;
-        border-color: var(--primary);
-        box-shadow: 0 0 0 4px var(--primary-light);
-        transform: translateY(-1px);
-    }
-
-    .form-group input::placeholder {
-        color: var(--text-muted);
-    }
-
-    .input-icon-wrapper {
+    .input-wrapper {
         position: relative;
+    }
+
+    .input-wrapper input {
+        width: 100%;
+        padding: 16px 16px 16px 50px;
+        background: #ecf0f1;
+        border: 3px solid transparent;
+        font-size: 15px;
+        color: #2c3e50;
+        border-radius: 0;
+        transition: all 0.2s ease;
+    }
+
+    .input-wrapper input:focus {
+        outline: none;
+        background: #ffffff;
+        border-color: #3498db;
+    }
+
+    .input-wrapper input::placeholder {
+        color: #95a5a6;
     }
 
     .input-icon {
@@ -152,167 +152,101 @@
         left: 16px;
         top: 50%;
         transform: translateY(-50%);
-        color: var(--text-muted);
-        transition: color 0.25s ease;
-        pointer-events: none;
+        color: #7f8c8d;
     }
 
-    .input-icon-wrapper input {
-        padding-left: 48px;
-    }
-
-    .input-icon-wrapper input:focus + .input-icon {
-        color: var(--primary);
+    .input-wrapper input:focus + .input-icon {
+        color: #3498db;
     }
 
     .btn-login {
         width: 100%;
-        padding: 16px 24px;
+        padding: 18px 24px;
         font-size: 16px;
-        font-weight: 600;
-        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-        color: white;
+        font-weight: 700;
+        background: #3498db;
+        color: #ffffff;
         border: none;
-        border-radius: var(--radius);
         cursor: pointer;
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
-        animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.4s both;
-    }
-
-    .btn-login::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-        transition: left 0.5s ease;
+        border-radius: 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: background 0.2s ease;
+        margin-top: 8px;
     }
 
     .btn-login:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
-    }
-
-    .btn-login:hover::before {
-        left: 100%;
+        background: #2980b9;
     }
 
     .btn-login:active {
-        transform: translateY(0);
+        background: #21618c;
     }
 
     .btn-login:disabled {
-        opacity: 0.7;
+        background: #bdc3c7;
         cursor: not-allowed;
-        transform: none;
     }
 
     .btn-login .spinner {
         display: none;
         width: 20px;
         height: 20px;
-        border: 2px solid rgba(255, 255, 255, 0.3);
+        border: 3px solid rgba(255, 255, 255, 0.3);
         border-top-color: white;
         border-radius: 50%;
         animation: spin 0.8s linear infinite;
         margin-right: 8px;
+        vertical-align: middle;
     }
 
     .btn-login.loading .spinner {
         display: inline-block;
     }
 
-    .btn-login.loading .btn-text {
-        opacity: 0.8;
-    }
-
     @keyframes spin {
-        to {
-            transform: rotate(360deg);
-        }
+        to { transform: rotate(360deg); }
     }
 
     .login-footer {
         text-align: center;
         margin-top: 32px;
         padding-top: 24px;
-        border-top: 1px solid var(--border-color);
-        animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.5s both;
+        border-top: 3px solid #ecf0f1;
     }
 
     .login-footer p {
-        color: var(--text-muted);
+        color: #7f8c8d;
         font-size: 14px;
     }
 
     .login-footer a {
-        color: var(--primary);
+        color: #3498db;
         text-decoration: none;
         font-weight: 600;
-        transition: color 0.25s ease;
+        transition: color 0.2s ease;
     }
 
     .login-footer a:hover {
-        color: var(--primary-hover);
-        text-decoration: underline;
+        color: #2980b9;
     }
 
-    .sports-decoration {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        top: 0;
-        left: 0;
-        pointer-events: none;
-        overflow: hidden;
-        z-index: -1;
+    .color-bar {
+        display: flex;
+        margin-top: 32px;
     }
 
-    .sports-decoration::before,
-    .sports-decoration::after {
-        content: '';
-        position: absolute;
-        border-radius: 50%;
-        opacity: 0.05;
-        animation: float 6s ease-in-out infinite;
+    .color-bar span {
+        flex: 1;
+        height: 6px;
     }
 
-    .sports-decoration::before {
-        width: 300px;
-        height: 300px;
-        background: var(--primary);
-        top: -150px;
-        right: -100px;
-    }
-
-    .sports-decoration::after {
-        width: 200px;
-        height: 200px;
-        background: var(--secondary);
-        bottom: -100px;
-        left: -50px;
-        animation-delay: 3s;
-    }
-
-    @keyframes float {
-        0%, 100% {
-            transform: translateY(0) scale(1);
-        }
-        50% {
-            transform: translateY(-20px) scale(1.05);
-        }
-    }
+    .color-bar span:nth-child(1) { background: #3498db; }
+    .color-bar span:nth-child(2) { background: #2ecc71; }
+    .color-bar span:nth-child(3) { background: #f39c12; }
+    .color-bar span:nth-child(4) { background: #e74c3c; }
 
     @media (max-width: 480px) {
-        .login-container {
-            margin: 40px auto;
-            padding: 0 16px;
-        }
-
         .login-card {
             padding: 36px 24px;
         }
@@ -320,13 +254,38 @@
         .login-header h2 {
             font-size: 28px;
         }
+
+        .flat-shape.shape-1 {
+            width: 250px;
+            height: 250px;
+        }
+
+        .flat-shape.shape-2 {
+            width: 180px;
+            height: 180px;
+        }
+
+        .flat-shape.shape-3 {
+            width: 120px;
+            height: 120px;
+        }
+
+        .flat-shape.shape-4 {
+            width: 100px;
+            height: 100px;
+        }
     }
 </style>
 
+<div class="flat-bg">
+    <div class="flat-shape shape-1"></div>
+    <div class="flat-shape shape-2"></div>
+    <div class="flat-shape shape-3"></div>
+    <div class="flat-shape shape-4"></div>
+</div>
+
 <div class="login-container">
     <div class="login-card">
-        <div class="sports-decoration"></div>
-        
         <div class="login-header">
             <h2>欢迎回来</h2>
             <p>登录您的账户以继续</p>
@@ -337,9 +296,9 @@
             
             <div class="form-group">
                 <label for="username">用户名</label>
-                <div class="input-icon-wrapper">
+                <div class="input-wrapper">
                     <input type="text" id="username" name="username" placeholder="请输入用户名" required autofocus>
-                    <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                         <circle cx="12" cy="7" r="4"/>
                     </svg>
@@ -348,9 +307,9 @@
 
             <div class="form-group">
                 <label for="password">密码</label>
-                <div class="input-icon-wrapper">
+                <div class="input-wrapper">
                     <input type="password" id="password" name="password" placeholder="请输入密码" required>
-                    <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                         <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                     </svg>
@@ -365,6 +324,13 @@
 
         <div class="login-footer">
             <p>还没有账户？ <a href="#">联系管理员</a></p>
+        </div>
+
+        <div class="color-bar">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
         </div>
     </div>
 </div>

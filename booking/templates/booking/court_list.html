@@ -4,7 +4,7 @@
 
 {% block content %}
     <div class="page-header">
-        <h2>🏸 场地预约</h2>
+        <h2>场地预约</h2>
         <p>选择日期和时间段进行预约</p>
     </div>
 
@@ -15,13 +15,13 @@
 
     <div id="booking-matrix-container">
         <div class="no-availability">
-            <p>📅 请选择日期查看可用场地</p>
+            <p>请选择日期查看可用场地</p>
         </div>
     </div>
 
     <div id="booking-summary-overlay" class="booking-summary-overlay"></div>
     <div id="booking-summary" class="booking-summary">
-        <h4>📋 预约确认</h4>
+        <h4>预约确认</h4>
         <p id="booking-info"></p>
         <div class="booking-actions">
             <button class="btn-confirm" onclick="showBookingModal()">确认预约</button>
@@ -32,7 +32,7 @@
     <div id="booking-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>📝 填写预约人信息</h3>
+                <h3>填写预约人信息</h3>
                 <span class="modal-close" onclick="closeBookingModal()">&times;</span>
             </div>
             <div class="modal-body">
@@ -72,27 +72,13 @@
     </div>
 
     <style>
-        .date-selector select {
-            padding: 10px 14px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 14px;
-            background: white;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .date-selector select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-light);
-        }
         .matrix-wrapper {
             background: white;
-            border-radius: 16px;
+            border-radius: 0;
             padding: 24px;
             margin-bottom: 24px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            border: 1px solid #e5e7eb;
+            box-shadow: none;
+            border: 3px solid #ecf0f1;
             overflow-x: auto;
         }
         .matrix-table {
@@ -105,27 +91,27 @@
         .matrix-table td {
             padding: 12px 8px;
             text-align: center;
-            border: 1px solid #e5e7eb;
+            border: 3px solid #ecf0f1;
         }
         .matrix-table thead th {
-            background: #f9fafb;
+            background: #3498db;
             font-weight: 600;
-            color: #374151;
+            color: white;
             position: sticky;
             top: 0;
             z-index: 10;
         }
         .matrix-table thead th:first-child {
-            background: #f3f4f6;
+            background: #2980b9;
             width: 100px;
             position: sticky;
             left: 0;
             z-index: 11;
         }
         .matrix-table tbody td:first-child {
-            background: #f3f4f6;
+            background: #ecf0f1;
             font-weight: 600;
-            color: #4b5563;
+            color: #2c3e50;
             position: sticky;
             left: 0;
             z-index: 1;
@@ -134,24 +120,23 @@
             padding: 8px 4px;
             cursor: pointer;
             transition: all 0.2s ease;
-            border-radius: 4px;
+            border-radius: 0;
             font-size: 13px;
             min-width: 70px;
         }
         .time-cell.available {
-            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-            color: #065f46;
-            border: 1px solid #6ee7b7;
+            background: #ecf0f1;
+            color: #2c3e50;
+            border: 3px solid #2ecc71;
         }
         .time-cell.available:hover {
-            background: linear-gradient(135deg, #a7f3d0 0%, #6ee7b7 100%);
-            transform: scale(1.05);
-            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+            background: #2ecc71;
+            color: white;
         }
         .time-cell.booked {
-            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-            color: #991b1b;
-            border: 1px solid #fca5a5;
+            background: #e74c3c;
+            color: white;
+            border: 3px solid #c0392b;
             cursor: not-allowed;
             display: flex;
             flex-direction: column;
@@ -163,7 +148,7 @@
         }
         .time-cell.booked .slot-label {
             font-size: 11px;
-            opacity: 0.7;
+            opacity: 0.8;
         }
         .time-cell.booked .slot-status {
             font-size: 13px;
@@ -174,13 +159,13 @@
             font-size: 12px;
             font-weight: 500;
             margin-top: 2px;
-            color: #7c3aed;
+            color: #f5b7b1;
         }
         .time-cell.booked .slot-students {
             font-size: 11px;
             opacity: 0.8;
             margin-top: 2px;
-            color: #6b7280;
+            color: #fadbd8;
         }
         .time-cell.booked .slot-phone {
             font-size: 11px;
@@ -194,9 +179,9 @@
             opacity: 1;
         }
         .time-cell.past {
-            background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
-            color: #9ca3af;
-            border: 1px solid #d1d5db;
+            background: #bdc3c7;
+            color: #7f8c8d;
+            border: 3px solid #95a5a6;
             cursor: not-allowed;
             display: flex;
             flex-direction: column;
@@ -215,18 +200,16 @@
             opacity: 0.6;
         }
         .time-cell.selected {
-            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+            background: #3498db;
             color: white;
-            border: 1px solid #4338ca;
-            transform: scale(1.08);
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+            border: 3px solid #2980b9;
         }
         .time-cell.selected:hover {
-            background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
+            background: #2980b9;
         }
         .time-cell.no-court {
-            background: #f3f4f6;
-            color: #9ca3af;
+            background: #ecf0f1;
+            color: #bdc3c7;
             cursor: not-allowed;
         }
         .time-cell .slot-label {
@@ -244,15 +227,15 @@
         }
         .time-header {
             font-size: 12px;
-            color: #6b7280;
+            color: white;
         }
         .no-availability {
             text-align: center;
             padding: 60px 20px;
-            color: #9ca3af;
+            color: #7f8c8d;
             background: white;
-            border-radius: 16px;
-            border: 1px solid #e5e7eb;
+            border-radius: 0;
+            border: 3px solid #ecf0f1;
         }
         .no-availability .icon {
             font-size: 48px;
@@ -260,20 +243,19 @@
         }
         .no-availability p {
             font-size: 15px;
-            color: #6b7280;
+            color: #7f8c8d;
         }
         .booking-summary {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-            border-radius: 16px 16px 0 0;
+            background: #ecf0f1;
+            border-radius: 0;
             padding: 20px 24px;
             display: none;
-            border: 1px solid #93c5fd;
-            border-bottom: none;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+            border-top: 6px solid #3498db;
+            box-shadow: none;
             z-index: 1000;
             opacity: 0;
             transition: all 0.3s ease;
@@ -298,13 +280,13 @@
             display: block;
         }
         .booking-summary h4 {
-            color: #1e40af;
+            color: #2c3e50;
             margin-bottom: 12px;
             font-size: 16px;
             font-weight: 600;
         }
         .booking-summary p {
-            color: #1e3a8a;
+            color: #7f8c8d;
             margin-bottom: 16px;
             font-size: 14px;
         }
@@ -314,51 +296,50 @@
             justify-content: center;
         }
         .booking-summary .btn-cancel {
-            background: white;
-            color: #ef4444;
-            border: 1px solid #fca5a5;
+            background: #ecf0f1;
+            color: #e74c3c;
+            border: 3px solid #e74c3c;
         }
         .booking-summary .btn-cancel:hover {
-            background: #fef2f2;
-            border-color: #ef4444;
+            background: #e74c3c;
+            color: white;
         }
         .btn-confirm {
             padding: 14px 32px;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: #2ecc71;
             color: white;
             border: none;
-            border-radius: 25px;
+            border-radius: 0;
             font-size: 15px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            box-shadow: none;
         }
         .btn-confirm:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+            background: #27ae60;
         }
         .btn-cancel {
             padding: 14px 32px;
-            background: white;
-            color: #4b5563;
-            border: 1px solid #d1d5db;
-            border-radius: 25px;
+            background: #ecf0f1;
+            color: #7f8c8d;
+            border: 3px solid #bdc3c7;
+            border-radius: 0;
             font-size: 15px;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
         }
         .btn-cancel:hover {
-            background: #f3f4f6;
-            border-color: #9ca3af;
+            background: #bdc3c7;
+            border-color: #95a5a6;
         }
         .legend {
             display: flex;
             gap: 24px;
             margin-top: 20px;
             padding-top: 20px;
-            border-top: 1px solid #e5e7eb;
+            border-top: 3px solid #ecf0f1;
             justify-content: center;
         }
         .legend-item {
@@ -366,40 +347,40 @@
             align-items: center;
             gap: 8px;
             font-size: 14px;
-            color: #6b7280;
+            color: #7f8c8d;
         }
         .legend-dot {
             width: 20px;
             height: 20px;
-            border-radius: 6px;
+            border-radius: 0;
         }
         .legend-dot.available {
-            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-            border: 2px solid #6ee7b7;
+            background: #2ecc71;
+            border: 3px solid #27ae60;
         }
         .legend-dot.booked {
-            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-            border: 2px solid #fca5a5;
+            background: #e74c3c;
+            border: 3px solid #c0392b;
         }
         .legend-dot.selected {
-            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
-            border: 2px solid #4338ca;
+            background: #3498db;
+            border: 3px solid #2980b9;
         }
         .legend-dot.past {
-            background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
-            border: 2px solid #d1d5db;
+            background: #bdc3c7;
+            border: 3px solid #95a5a6;
         }
         .info-banner {
             display: flex;
             align-items: center;
             gap: 12px;
             padding: 16px 20px;
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            border-radius: 12px;
+            background: #f39c12;
+            border-radius: 0;
             margin-bottom: 20px;
-            border: 1px solid #fcd34d;
+            border: 3px solid #e67e22;
             font-size: 14px;
-            color: #92400e;
+            color: white;
         }
         .info-banner .icon {
             font-size: 20px;
@@ -421,31 +402,20 @@
         }
         .modal-content {
             background: white;
-            border-radius: 16px;
+            border-radius: 0;
             padding: 0;
             width: 90%;
             max-width: 420px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            animation: modalSlideIn 0.3s ease;
-        }
-        @keyframes modalSlideIn {
-            from {
-                transform: translateY(-30px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
+            box-shadow: none;
+            border: 3px solid #3498db;
         }
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 20px 24px;
-            border-bottom: 1px solid #e5e7eb;
-            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
-            border-radius: 16px 16px 0 0;
+            border-bottom: 3px solid #ecf0f1;
+            background: #3498db;
         }
         .modal-header h3 {
             margin: 0;
@@ -477,36 +447,39 @@
         .modal-body .form-group label {
             display: block;
             font-size: 14px;
-            font-weight: 500;
-            color: #374151;
-            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         .modal-body .form-group input {
             width: 100%;
             padding: 12px 16px;
-            border: 1px solid #d1d5db;
-            border-radius: 10px;
+            border: 3px solid #bdc3c7;
+            border-radius: 0;
             font-size: 15px;
             transition: all 0.2s;
             box-sizing: border-box;
+            background: #ecf0f1;
+            color: #2c3e50;
         }
         .modal-body .form-group input:focus {
             outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-light);
+            border-color: #3498db;
+            background: white;
         }
         .modal-footer {
             display: flex;
             gap: 12px;
             padding: 20px 24px;
-            border-top: 1px solid #e5e7eb;
-            background: #f9fafb;
-            border-radius: 0 0 16px 16px;
+            border-top: 3px solid #ecf0f1;
+            background: #ecf0f1;
         }
         .modal-footer .btn {
             flex: 1;
             padding: 14px 20px;
-            border-radius: 25px;
+            border-radius: 0;
             font-size: 15px;
             font-weight: 600;
             cursor: pointer;
@@ -514,20 +487,19 @@
             border: none;
         }
         .modal-footer .btn-confirm {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: #2ecc71;
             color: white;
         }
         .modal-footer .btn-confirm:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            background: #27ae60;
         }
         .modal-footer .btn-cancel {
             background: white;
-            color: #4b5563;
-            border: 1px solid #d1d5db;
+            color: #7f8c8d;
+            border: 3px solid #bdc3c7;
         }
         .modal-footer .btn-cancel:hover {
-            background: #f3f4f6;
+            background: #ecf0f1;
         }
     </style>
 
@@ -592,7 +564,7 @@
                 .catch(error => {
                     console.error('Error:', error);
                     document.getElementById('booking-matrix-container').innerHTML = 
-                        '<div class="no-availability"><div class="icon">❌</div><p>加载失败，请重试</p></div>';
+                        '<div class="no-availability"><div class="icon">X</div><p>加载失败，请重试</p></div>';
                 });
         }
 
@@ -600,13 +572,13 @@
             const container = document.getElementById('booking-matrix-container');
             
             if (courts.length === 0) {
-                container.innerHTML = '<div class="no-availability"><div class="icon">🏟️</div><p>暂无场地</p></div>';
+                container.innerHTML = '<div class="no-availability"><div class="icon">?</div><p>暂无场地</p></div>';
                 return;
             }
 
             const availableCourts = courts.filter(c => c.is_available);
             if (availableCourts.length === 0) {
-                container.innerHTML = '<div class="no-availability"><div class="icon">📅</div><p>该日期暂无开放的场地</p></div>';
+                container.innerHTML = '<div class="no-availability"><div class="icon">?</div><p>该日期暂无开放的场地</p></div>';
                 return;
             }
 
@@ -632,13 +604,13 @@
             allTimeSlots.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
 
             if (allTimeSlots.length === 0) {
-                container.innerHTML = '<div class="no-availability"><div class="icon">⏰</div><p>暂无可用时间段</p></div>';
+                container.innerHTML = '<div class="no-availability"><div class="icon">?</div><p>暂无可用时间段</p></div>';
                 return;
             }
 
             let html = `<div class="info-banner">
-                <span class="icon">📅</span>
-                <span>点击方格可选择时间段，同时选择同一场地（列）的连续时间段即可预约</span>
+                <span class="icon">!</span>
+                <span>点击时间段进行预约，可同时选择多个时间段</span>
             </div>`;
 
             html += '<div class="matrix-wrapper">';
