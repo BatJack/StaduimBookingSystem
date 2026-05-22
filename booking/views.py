@@ -14,11 +14,11 @@ import struct
 
 def get_network_time():
     try:
-        ntp_servers = ['time.windows.com', 'time.nist.gov', 'pool.ntp.org']
+        ntp_servers = ['ntp.aliyun.com', 'ntp.tencent.com']
         for server in ntp_servers:
             try:
                 client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                client.settimeout(3)
+                client.settimeout(1)
                 data = b'\x1b' + 47 * b'\x00'
                 client.sendto(data, (server, 123))
                 response, _ = client.recvfrom(1024)
