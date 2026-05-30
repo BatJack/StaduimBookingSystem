@@ -4,7 +4,7 @@
 
 {% block content %}
     <div class="page-header">
-        <h2>🏸 场地预约</h2>
+        <h2>场地预约</h2>
         <p>选择日期和时间段进行预约</p>
     </div>
 
@@ -13,18 +13,46 @@
         <input type="date" id="booking-date" min="{{ today|date:'Y-m-d' }}" value="{{ today|date:'Y-m-d' }}">
     </div>
 
+    <div id="court-type-filter" class="court-type-filter">
+        <button class="filter-btn active" data-type="all">全部场地</button>
+    </div>
+
     <div id="booking-matrix-container">
         <div class="no-availability">
-            <p>📅 请选择日期查看可用场地</p>
+            <p>请选择日期查看可用场地</p>
         </div>
     </div>
 
+    <div id="booking-summary-overlay" class="booking-summary-overlay"></div>
     <div id="booking-summary" class="booking-summary">
-        <h4>📋 预约确认</h4>
+        <h4>预约确认</h4>
         <p id="booking-info"></p>
         <div class="booking-actions">
-            <button class="btn-confirm" onclick="confirmBooking()">确认预约</button>
+            <button class="btn-confirm" onclick="showBookingModal()">确认预约</button>
             <button class="btn-cancel" onclick="cancelSelection()">取消选择</button>
+        </div>
+    </div>
+
+    <div id="booking-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>填写预约人信息</h3>
+                <span class="modal-close" onclick="closeBookingModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="modal-booker-name">预约人姓名 *</label>
+                    <input type="text" id="modal-booker-name" placeholder="请输入预约人姓名" required>
+                </div>
+                <div class="form-group">
+                    <label for="modal-booker-phone">联系方式（手机号） *</label>
+                    <input type="tel" id="modal-booker-phone" placeholder="请输入手机号码" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-confirm" onclick="submitBooking()">确认预约</button>
+                <button class="btn-cancel" onclick="closeBookingModal()">取消</button>
+            </div>
         </div>
     </div>
 
@@ -41,33 +69,60 @@
             <div class="legend-dot selected"></div>
             <span>已选择</span>
         </div>
+        <div class="legend-item">
+            <div class="legend-dot past"></div>
+            <span>已过时</span>
+        </div>
     </div>
 
     <style>
-        .date-selector select {
-            padding: 10px 14px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 14px;
+        .court-type-filter {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 16px;
             background: white;
+            border: 3px solid #ecf0f1;
+        }
+        .filter-btn {
+            padding: 10px 20px;
+            background: #ecf0f1;
+            color: #2c3e50;
+            border: 3px solid #bdc3c7;
+            border-radius: 0;
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        .date-selector select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-light);
+        .filter-btn:hover {
+            background: #bdc3c7;
+        }
+        .filter-btn.active {
+            background: #3498db;
+            color: white;
+            border-color: #2980b9;
         }
         .matrix-wrapper {
             background: white;
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            border: 1px solid #e5e7eb;
+            border-radius: 0;
+            padding: 0px;
+            margin-top: 0px;
+            margin-bottom: 0px;
+            box-shadow: none;
+            border: 3px solid #ecf0f1;
             overflow-x: auto;
+            overflow-y: auto;
+            max-height: 80vh;
+        }
+        .matrix-table tbody tr {
+            content-visibility: auto;
+            contain-intrinsic-size: 0 60px;
         }
         .matrix-table {
+            padding: 0px;
+            margin: 0px;
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
@@ -77,27 +132,39 @@
         .matrix-table td {
             padding: 12px 8px;
             text-align: center;
-            border: 1px solid #e5e7eb;
+            border: 3px solid #ecf0f1;
         }
         .matrix-table thead th {
-            background: #f9fafb;
+            width: 0;
+            height: 50px;
+            font-size: clamp(10px, 1.8vw, 13px);
+            overflow: hidden;
+            align-items: center;
+            justify-content: center;
+            background: #3498db;
             font-weight: 600;
-            color: #374151;
+            color: white;
             position: sticky;
             top: 0;
             z-index: 10;
         }
+        .matrix-table thead th:not(:first-child) {
+            overflow: hidden;
+            white-space: normal;
+            word-wrap: break-word;
+            word-break: break-all;
+        }
         .matrix-table thead th:first-child {
-            background: #f3f4f6;
-            width: 100px;
+            background: #2980b9;
+            width: 50px;
             position: sticky;
             left: 0;
             z-index: 11;
         }
         .matrix-table tbody td:first-child {
-            background: #f3f4f6;
+            background: #ecf0f1;
             font-weight: 600;
-            color: #4b5563;
+            color: #2c3e50;
             position: sticky;
             left: 0;
             z-index: 1;
@@ -106,43 +173,117 @@
             padding: 8px 4px;
             cursor: pointer;
             transition: all 0.2s ease;
-            border-radius: 4px;
+            border-radius: 0;
             font-size: 13px;
             min-width: 70px;
+            height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .time-cell .slot-label {
+            font-weight: 600;
+            display: block;
+        }
+        .time-cell .slot-status {
+            font-size: 10px;
+            margin-top: 2px;
+            opacity: 0.8;
         }
         .time-cell.available {
-            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-            color: #065f46;
-            border: 1px solid #6ee7b7;
+            background: #ecf0f1;
+            color: #2c3e50;
+            border: 3px solid #2ecc71;
         }
         .time-cell.available:hover {
-            background: linear-gradient(135deg, #a7f3d0 0%, #6ee7b7 100%);
-            transform: scale(1.05);
-            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+            background: #2ecc71;
+            color: white;
         }
         .time-cell.booked {
-            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-            color: #991b1b;
-            border: 1px solid #fca5a5;
+            background: #e74c3c;
+            color: white;
+            border: 3px solid #c0392b;
             cursor: not-allowed;
         }
         .time-cell.booked:hover {
             transform: none;
             box-shadow: none;
         }
+        .time-cell.booked .slot-label {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+        .time-cell.booked .slot-status {
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+        .time-cell.booked .slot-info {
+            font-size: 11px;
+            font-weight: 500;
+            margin-top: 1px;
+            color: #f5b7b1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 100%;
+        }
+        .time-cell.booked .slot-students {
+            font-size: 10px;
+            opacity: 0.8;
+            margin-top: 1px;
+            color: #fadbd8;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 100%;
+        }
+        .time-cell.booked .slot-phone {
+            font-size: 10px;
+            opacity: 0.8;
+            margin-top: 1px;
+            cursor: pointer;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 100%;
+        }
+        .time-cell.booked .slot-phone:hover {
+            opacity: 1;
+        }
+        .time-cell.past {
+            background: #bdc3c7;
+            color: #7f8c8d;
+            border: 3px solid #95a5a6;
+            cursor: not-allowed;
+        }
+        .time-cell.past:hover {
+            transform: none;
+            box-shadow: none;
+        }
+        .time-cell.past .slot-label {
+            font-size: 11px;
+            opacity: 0.6;
+        }
+        .time-cell.past .slot-status {
+            font-size: 11px;
+            opacity: 0.6;
+        }
         .time-cell.selected {
-            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+            background: #3498db;
             color: white;
-            border: 1px solid #4338ca;
-            transform: scale(1.08);
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+            border: 3px solid #2980b9;
         }
         .time-cell.selected:hover {
-            background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
+            background: #2980b9;
         }
         .time-cell.no-court {
-            background: #f3f4f6;
-            color: #9ca3af;
+            background: #ecf0f1;
+            color: #bdc3c7;
             cursor: not-allowed;
         }
         .time-cell .slot-label {
@@ -160,15 +301,15 @@
         }
         .time-header {
             font-size: 12px;
-            color: #6b7280;
+            color: white;
         }
         .no-availability {
             text-align: center;
             padding: 60px 20px;
-            color: #9ca3af;
+            color: #7f8c8d;
             background: white;
-            border-radius: 16px;
-            border: 1px solid #e5e7eb;
+            border-radius: 0;
+            border: 3px solid #ecf0f1;
         }
         .no-availability .icon {
             font-size: 48px;
@@ -176,71 +317,103 @@
         }
         .no-availability p {
             font-size: 15px;
-            color: #6b7280;
+            color: #7f8c8d;
         }
         .booking-summary {
-            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-            border-radius: 16px;
-            padding: 24px;
-            margin-top: 24px;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #ecf0f1;
+            border-radius: 0;
+            padding: 20px 24px;
             display: none;
-            border: 1px solid #93c5fd;
+            border-top: 6px solid #3498db;
+            box-shadow: none;
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s ease;
+            max-height: 35vh;
+            overflow-y: auto;
         }
         .booking-summary.show {
             display: block;
+            opacity: 1;
+        }
+        .booking-summary-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 999;
+        }
+        .booking-summary-overlay.show {
+            display: block;
         }
         .booking-summary h4 {
-            color: #1e40af;
+            color: #2c3e50;
             margin-bottom: 12px;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
         }
         .booking-summary p {
-            color: #1e3a8a;
-            margin-bottom: 20px;
-            font-size: 15px;
+            color: #7f8c8d;
+            margin-bottom: 16px;
+            font-size: 14px;
         }
         .booking-actions {
             display: flex;
             gap: 12px;
+            justify-content: center;
+        }
+        .booking-summary .btn-cancel {
+            background: #ecf0f1;
+            color: #e74c3c;
+            border: 3px solid #e74c3c;
+        }
+        .booking-summary .btn-cancel:hover {
+            background: #e74c3c;
+            color: white;
         }
         .btn-confirm {
             padding: 14px 32px;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: #2ecc71;
             color: white;
             border: none;
-            border-radius: 25px;
+            border-radius: 0;
             font-size: 15px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            box-shadow: none;
         }
         .btn-confirm:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+            background: #27ae60;
         }
         .btn-cancel {
             padding: 14px 32px;
-            background: white;
-            color: #4b5563;
-            border: 1px solid #d1d5db;
-            border-radius: 25px;
+            background: #ecf0f1;
+            color: #7f8c8d;
+            border: 3px solid #bdc3c7;
+            border-radius: 0;
             font-size: 15px;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
         }
         .btn-cancel:hover {
-            background: #f3f4f6;
-            border-color: #9ca3af;
+            background: #bdc3c7;
+            border-color: #95a5a6;
         }
         .legend {
             display: flex;
             gap: 24px;
             margin-top: 20px;
             padding-top: 20px;
-            border-top: 1px solid #e5e7eb;
+            border-top: 3px solid #ecf0f1;
             justify-content: center;
         }
         .legend-item {
@@ -248,39 +421,159 @@
             align-items: center;
             gap: 8px;
             font-size: 14px;
-            color: #6b7280;
+            color: #7f8c8d;
         }
         .legend-dot {
             width: 20px;
             height: 20px;
-            border-radius: 6px;
+            border-radius: 0;
         }
         .legend-dot.available {
-            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-            border: 2px solid #6ee7b7;
+            background: #2ecc71;
+            border: 3px solid #27ae60;
         }
         .legend-dot.booked {
-            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-            border: 2px solid #fca5a5;
+            background: #e74c3c;
+            border: 3px solid #c0392b;
         }
         .legend-dot.selected {
-            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
-            border: 2px solid #4338ca;
+            background: #3498db;
+            border: 3px solid #2980b9;
+        }
+        .legend-dot.past {
+            background: #bdc3c7;
+            border: 3px solid #95a5a6;
         }
         .info-banner {
             display: flex;
             align-items: center;
             gap: 12px;
             padding: 16px 20px;
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            border-radius: 12px;
+            background: #f39c12;
+            border-radius: 0;
             margin-bottom: 20px;
-            border: 1px solid #fcd34d;
+            border: 3px solid #e67e22;
             font-size: 14px;
-            color: #92400e;
+            color: white;
         }
         .info-banner .icon {
             font-size: 20px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 0;
+            padding: 0;
+            width: 90%;
+            max-width: 420px;
+            box-shadow: none;
+            border: 3px solid #3498db;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 3px solid #ecf0f1;
+            background: #3498db;
+        }
+        .modal-header h3 {
+            margin: 0;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .modal-close {
+            color: white;
+            font-size: 28px;
+            font-weight: 300;
+            cursor: pointer;
+            line-height: 1;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+        .modal-close:hover {
+            opacity: 1;
+        }
+        .modal-body {
+            padding: 24px;
+        }
+        .modal-body .form-group {
+            margin-bottom: 20px;
+        }
+        .modal-body .form-group:last-child {
+            margin-bottom: 0;
+        }
+        .modal-body .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .modal-body .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 3px solid #bdc3c7;
+            border-radius: 0;
+            font-size: 15px;
+            transition: all 0.2s;
+            box-sizing: border-box;
+            background: #ecf0f1;
+            color: #2c3e50;
+        }
+        .modal-body .form-group input:focus {
+            outline: none;
+            border-color: #3498db;
+            background: white;
+        }
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            padding: 20px 24px;
+            border-top: 3px solid #ecf0f1;
+            background: #ecf0f1;
+        }
+        .modal-footer .btn {
+            flex: 1;
+            padding: 14px 20px;
+            border-radius: 0;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+        .modal-footer .btn-confirm {
+            background: #2ecc71;
+            color: white;
+        }
+        .modal-footer .btn-confirm:hover {
+            background: #27ae60;
+        }
+        .modal-footer .btn-cancel {
+            background: white;
+            color: #7f8c8d;
+            border: 3px solid #bdc3c7;
+        }
+        .modal-footer .btn-cancel:hover {
+            background: #ecf0f1;
         }
     </style>
 
@@ -289,6 +582,12 @@
         let selectedCourtId = null;
         let currentDate = null;
         let courtsData = [];
+        let serverTime = null;
+        let serverDate = null;
+        let currentFilterType = 'all';
+        const isAdmin = {{ is_admin|yesno:"true,false" }};
+        const adminBookingEditUrl = "{% url 'admin_booking_edit' 0 %}";
+        const adminCourseBookingEditUrl = "{% url 'admin_course_booking_edit' 0 %}";
 
         function formatDate(dateStr) {
             const date = new Date(dateStr);
@@ -296,6 +595,57 @@
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
             return `${year}年${month}月${day}日`;
+        }
+
+        function isSlotPast(slotEndTime) {
+            if (!serverTime || !serverDate || !currentDate) {
+                return false;
+            }
+            
+            if (currentDate !== serverDate) {
+                return false;
+            }
+            
+            const [endHour, endMinute] = slotEndTime.split(':').map(Number);
+            const [serverHour, serverMinute] = serverTime.split(' ')[1].split(':').map(Number);
+            
+            const endMinutes = endHour * 60 + endMinute;
+            const currentMinutes = serverHour * 60 + serverMinute;
+            
+            return endMinutes <= currentMinutes;
+        }
+
+        function updateFilterButtons() {
+            const filterContainer = document.getElementById('court-type-filter');
+            const typeSet = new Set();
+            
+            courtsData.forEach(court => {
+                if (court.is_available && court.court_type_name) {
+                    typeSet.add(court.court_type_name);
+                }
+            });
+            
+            let html = '<button class="filter-btn ' + (currentFilterType === 'all' ? 'active' : '') + '" data-type="all">全部场地</button>';
+            
+            const sortedTypes = Array.from(typeSet).sort();
+            sortedTypes.forEach(type => {
+                const isActive = currentFilterType === type ? 'active' : '';
+                html += `<button class="filter-btn ${isActive}" data-type="${type}">${type}</button>`;
+            });
+            
+            filterContainer.innerHTML = html;
+            
+            filterContainer.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    filterContainer.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentFilterType = this.dataset.type;
+                    selectedSlots = [];
+                    selectedCourtId = null;
+                    updateBookingSummary();
+                    renderMatrix(courtsData);
+                });
+            });
         }
 
         function loadTimeSlots() {
@@ -307,6 +657,7 @@
             currentDate = selectedDate;
             selectedSlots = [];
             selectedCourtId = null;
+            currentFilterType = 'all';
             updateBookingSummary();
 
             const url = `{% url 'get_time_slots' %}?date=${selectedDate}`;
@@ -315,12 +666,15 @@
                 .then(response => response.json())
                 .then(data => {
                     courtsData = data.courts || [];
+                    serverTime = data.server_time || null;
+                    serverDate = data.server_date || null;
+                    updateFilterButtons();
                     renderMatrix(courtsData);
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     document.getElementById('booking-matrix-container').innerHTML = 
-                        '<div class="no-availability"><div class="icon">❌</div><p>加载失败，请重试</p></div>';
+                        '<div class="no-availability"><div class="icon">X</div><p>加载失败，请重试</p></div>';
                 });
         }
 
@@ -328,20 +682,25 @@
             const container = document.getElementById('booking-matrix-container');
             
             if (courts.length === 0) {
-                container.innerHTML = '<div class="no-availability"><div class="icon">🏟️</div><p>暂无场地</p></div>';
+                container.innerHTML = '<div class="no-availability"><div class="icon">?</div><p>暂无场地</p></div>';
                 return;
             }
 
-            const availableCourts = courts.filter(c => c.is_available);
-            if (availableCourts.length === 0) {
-                container.innerHTML = '<div class="no-availability"><div class="icon">📅</div><p>该日期暂无开放的场地</p></div>';
+            let filteredCourts = courts.filter(c => c.is_available);
+            
+            if (currentFilterType !== 'all') {
+                filteredCourts = filteredCourts.filter(c => c.court_type_name === currentFilterType);
+            }
+            
+            if (filteredCourts.length === 0) {
+                container.innerHTML = '<div class="no-availability"><div class="icon">?</div><p>该类型暂无开放的场地</p></div>';
                 return;
             }
 
             const allTimeSlots = [];
             const timeSet = new Set();
             
-            availableCourts.forEach(court => {
+            filteredCourts.forEach(court => {
                 if (court.time_slots && court.time_slots.length > 0) {
                     court.time_slots.forEach(slot => {
                         const key = `${slot.start}-${slot.end}`;
@@ -360,13 +719,13 @@
             allTimeSlots.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
 
             if (allTimeSlots.length === 0) {
-                container.innerHTML = '<div class="no-availability"><div class="icon">⏰</div><p>暂无可用时间段</p></div>';
+                container.innerHTML = '<div class="no-availability"><div class="icon">?</div><p>暂无可用时间段</p></div>';
                 return;
             }
 
             let html = `<div class="info-banner">
-                <span class="icon">📅</span>
-                <span>点击方格可选择时间段，同时选择同一场地（列）的连续时间段即可预约</span>
+                <span class="icon">!</span>
+                <span>点击时间段进行预约，可同时选择多个时间段</span>
             </div>`;
 
             html += '<div class="matrix-wrapper">';
@@ -374,38 +733,97 @@
             
             html += '<thead><tr>';
             html += '<th class="time-header">时间</th>';
-            availableCourts.forEach(court => {
-                html += `<th class="court-header">${court.name}</th>`;
+            filteredCourts.forEach(court => {
+                const courtNumber = court.court_number ? ` - ${court.court_number}` : '';
+                html += `<th class="court-header">${court.name}${courtNumber}</th>`;
             });
             html += '</tr></thead>';
 
             html += '<tbody>';
             allTimeSlots.forEach(slot => {
+                const isPast = isSlotPast(slot.end);
+                
                 html += '<tr>';
                 html += `<td>${slot.start}<br><span style="font-size:11px;color:#9ca3af">${slot.end}</span></td>`;
-                
-                availableCourts.forEach(court => {
+
+                filteredCourts.forEach(court => {
                     const courtSlot = court.time_slots.find(s => s.start === slot.start && s.end === slot.end);
                     const isBooked = courtSlot ? courtSlot.is_booked : true;
-                    const statusClass = isBooked ? 'booked' : 'available';
-                    const statusText = isBooked ? '已满' : '可预约';
+                    let statusClass = isBooked ? 'booked' : 'available';
+                    let statusText = isBooked ? '已满' : '可预约';
                     
+                    if (isPast && !isBooked) {
+                        statusClass = 'past';
+                        statusText = '已过时';
+                    }
+
                     if (!court.is_available) {
                         html += `<td><div class="time-cell no-court"><span class="slot-label">-</span></div></td>`;
+                    } else if (isBooked) {
+                        const bookingType = courtSlot ? courtSlot.booking_type : 'court';
+                        const bookerName = courtSlot ? (courtSlot.booker_name || '未知') : '未知';
+                        const bookerPhone = courtSlot ? (courtSlot.booker_phone || '') : '';
+                        const bookingId = courtSlot ? courtSlot.booking_id : '';
+                        const studentCount = courtSlot ? (courtSlot.student_count || 0) : 0;
+                        const totalClassHours = courtSlot ? (courtSlot.total_class_hours || 0) : 0;
+                        const students = courtSlot ? (courtSlot.students || []) : [];
+
+                        let cellContent = `<span class="slot-label">${slot.start}</span>`;
+
+                        if (isAdmin) {
+                            if (bookingType === 'course') {
+                                cellContent += `<span class="slot-status">📚 课程预约</span>`;
+                                cellContent += `<span class="slot-info">${studentCount}人 / ${totalClassHours}课时</span>`;
+                                if (students.length > 0) {
+                                    const studentNames = students.map(s => s.student__name).join('、');
+                                    cellContent += `<span class="slot-students">${studentNames}</span>`;
+                                }
+                            } else {
+                                cellContent += `<span class="slot-status">${bookerName}</span>`;
+                                cellContent += `<span class="slot-phone" onclick="copyPhone(event, '${bookerPhone}')" title="点击复制电话">${bookerPhone}</span>`;
+                            }
+
+                            const editUrl = bookingType === 'course'
+                                ? adminCourseBookingEditUrl.replace('0', bookingId)
+                                : adminBookingEditUrl.replace('0', bookingId);
+
+                            html += `<td><div class="time-cell ${statusClass}"
+                                data-court-id="${court.id}"
+                                data-court-name="${court.name}"
+                                data-start="${slot.start}"
+                                data-end="${slot.end}"
+                                data-booked="true"
+                                data-booking-type="${bookingType}"
+                                data-booking-id="${bookingId}"
+                                ondblclick="navigateToEdit(this)">
+                                ${cellContent}
+                            </div></td>`;
+                        } else {
+                            cellContent += `<span class="slot-status">已预约</span>`;
+                            html += `<td><div class="time-cell ${statusClass}"
+                                data-court-id="${court.id}"
+                                data-court-name="${court.name}"
+                                data-start="${slot.start}"
+                                data-end="${slot.end}"
+                                data-booked="true">
+                                ${cellContent}
+                            </div></td>`;
+                        }
                     } else {
-                        html += `<td><div class="time-cell ${statusClass}" 
+                        const clickHandler = isPast ? '' : 'onclick="toggleSlot(this)"';
+                        html += `<td><div class="time-cell ${statusClass}"
                             data-court-id="${court.id}"
                             data-court-name="${court.name}"
-                            data-start="${slot.start}" 
+                            data-start="${slot.start}"
                             data-end="${slot.end}"
-                            data-booked="${isBooked}"
-                            onclick="toggleSlot(this)">
+                            data-booked="false"
+                            ${clickHandler}>
                             <span class="slot-label">${slot.start}</span>
                             <span class="slot-status">${statusText}</span>
                         </div></td>`;
                     }
                 });
-                
+
                 html += '</tr>';
             });
             html += '</tbody></table></div>';
@@ -414,7 +832,7 @@
         }
 
         function toggleSlot(element) {
-            if (element.classList.contains('booked') || element.classList.contains('no-court')) {
+            if (element.classList.contains('booked') || element.classList.contains('no-court') || element.classList.contains('past')) {
                 return;
             }
 
@@ -470,7 +888,7 @@
             const startTime = sortedSlots[0].start;
             const lastSlot = sortedSlots[sortedSlots.length - 1];
             const courtName = sortedSlots[0].courtName;
-            
+
             let totalMinutes = 0;
             sortedSlots.forEach(slot => {
                 const [sh, sm] = slot.start.split(':').map(Number);
@@ -484,7 +902,7 @@
             if (hours > 0) duration += `${hours}小时`;
             if (minutes > 0) duration += `${minutes}分钟`;
 
-            info.innerHTML = `已选择 <strong>${courtName}</strong>，日期：<strong>${formatDate(currentDate)}</strong>，时间：<strong>${startTime} - ${lastSlot.end}</strong>，共 <strong>${duration}</strong>`;
+            info.innerHTML = `已选择 <strong>${courtName}</strong>，日期：<strong>${formatDate(currentDate)}</strong>，时间：<strong>${startTime} - ${lastSlot.end}</strong>，共 <strong>${duration}</strong>，<strong>${selectedSlots.length}</strong> 个时段`;
         }
 
         function cancelSelection() {
@@ -498,25 +916,62 @@
             updateBookingSummary();
         }
 
-        function confirmBooking() {
+        function showBookingModal() {
             if (selectedSlots.length === 0) {
                 alert('请先选择时间段');
                 return;
             }
 
             const sortedSlots = [...selectedSlots].sort((a, b) => a.start.localeCompare(b.start));
-            
             const hasGap = checkForGaps(sortedSlots);
             if (hasGap) {
                 alert('请选择连续的时间段');
                 return;
             }
 
+            document.getElementById('booking-summary').classList.remove('show');
+            document.getElementById('booking-modal').classList.add('show');
+            document.getElementById('modal-booker-name').value = '';
+            document.getElementById('modal-booker-phone').value = '';
+            document.getElementById('modal-booker-name').focus();
+        }
+
+        function closeBookingModal() {
+            document.getElementById('booking-modal').classList.remove('show');
+            if (selectedSlots.length > 0) {
+                document.getElementById('booking-summary').classList.add('show');
+            }
+        }
+
+        function submitBooking() {
+            const bookerName = document.getElementById('modal-booker-name').value.trim();
+            const bookerPhone = document.getElementById('modal-booker-phone').value.trim();
+
+            if (!bookerName) {
+                alert('请输入预约人姓名');
+                document.getElementById('modal-booker-name').focus();
+                return;
+            }
+
+            if (!bookerPhone) {
+                alert('请输入联系方式');
+                document.getElementById('modal-booker-phone').focus();
+                return;
+            }
+
+            const phoneRegex = /^1[3-9]\d{9}$/;
+            if (!phoneRegex.test(bookerPhone)) {
+                alert('请输入正确的手机号码');
+                document.getElementById('modal-booker-phone').focus();
+                return;
+            }
+
+            const sortedSlots = [...selectedSlots].sort((a, b) => a.start.localeCompare(b.start));
             const startTime = sortedSlots[0].start;
             const lastSlot = sortedSlots[sortedSlots.length - 1];
             const endTime = lastSlot.end;
 
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
                               document.cookie.match(/csrftoken=([^;]+)/)?.[1];
 
             fetch('{% url "create_booking_api" %}', {
@@ -529,12 +984,15 @@
                     court_id: selectedCourtId,
                     date: currentDate,
                     start_time: startTime,
-                    end_time: endTime
+                    end_time: endTime,
+                    booker_name: bookerName,
+                    booker_phone: bookerPhone
                 })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    closeBookingModal();
                     alert('预约成功！');
                     window.location.href = '{% url "my_bookings" %}';
                 } else {
@@ -545,6 +1003,74 @@
                 console.error('Error:', error);
                 alert('预约失败，请重试');
             });
+        }
+
+        function copyPhone(event, phone) {
+            event.stopPropagation();
+            if (!phone) return;
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(phone).then(() => {
+                    showCopyToast('已复制: ' + phone);
+                }).catch(() => {
+                    fallbackCopy(phone);
+                });
+            } else {
+                fallbackCopy(phone);
+            }
+        }
+
+        function navigateToEdit(element) {
+            const bookingType = element.dataset.bookingType;
+            const bookingId = element.dataset.bookingId;
+
+            if (!bookingId) return;
+
+            const url = bookingType === 'course'
+                ? adminCourseBookingEditUrl.replace('0', bookingId)
+                : adminBookingEditUrl.replace('0', bookingId);
+
+            window.location.href = url;
+        }
+
+        function fallbackCopy(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showCopyToast('已复制: ' + text);
+            } catch (err) {
+                showCopyToast('复制失败', true);
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function showCopyToast(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: ${isError ? '#ef4444' : '#10b981'};
+                color: white;
+                padding: 12px 24px;
+                border-radius: 8px;
+                z-index: 9999;
+                font-size: 14px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 2000);
         }
 
         function checkForGaps(slots) {

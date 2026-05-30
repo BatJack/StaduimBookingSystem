@@ -3,19 +3,343 @@
 {% block title %}登录 - 体育场馆预约系统{% endblock %}
 
 {% block content %}
-    <div class="card" style="max-width: 400px; margin: 50px auto;">
-        <h2>用户登录</h2>
-        <form method="post">
+<style>
+    .flat-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #f5f5f5;
+        z-index: -1;
+    }
+
+    .flat-shape {
+        position: absolute;
+        z-index: 0;
+    }
+
+    .flat-shape.shape-1 {
+        width: 400px;
+        height: 400px;
+        background: #3498db;
+        top: -100px;
+        right: -100px;
+        border-radius: 50%;
+    }
+
+    .flat-shape.shape-2 {
+        width: 300px;
+        height: 300px;
+        background: #2ecc71;
+        bottom: -80px;
+        left: -80px;
+        border-radius: 50%;
+    }
+
+    .flat-shape.shape-3 {
+        width: 200px;
+        height: 200px;
+        background: #e74c3c;
+        top: 40%;
+        left: 10%;
+        transform: rotate(45deg);
+    }
+
+    .flat-shape.shape-4 {
+        width: 150px;
+        height: 150px;
+        background: #f39c12;
+        bottom: 30%;
+        right: 15%;
+        border-radius: 50%;
+    }
+
+    .login-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .login-card {
+        width: 100%;
+        max-width: 400px;
+        background: #ffffff;
+        padding: 48px 40px;
+        border-radius: 0;
+        position: relative;
+    }
+
+    .login-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 6px;
+        height: 100%;
+        background: #3498db;
+    }
+
+    .login-header {
+        text-align: left;
+        margin-bottom: 40px;
+    }
+
+    .login-header h2 {
+        font-size: 32px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 8px;
+        letter-spacing: -0.5px;
+    }
+
+    .login-header p {
+        color: #7f8c8d;
+        font-size: 15px;
+    }
+
+    .login-form {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .form-group {
+        position: relative;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .input-wrapper {
+        position: relative;
+    }
+
+    .input-wrapper input {
+        width: 100%;
+        padding: 16px 16px 16px 50px;
+        background: #ecf0f1;
+        border: 3px solid transparent;
+        font-size: 15px;
+        color: #2c3e50;
+        border-radius: 0;
+        transition: all 0.2s ease;
+    }
+
+    .input-wrapper input:focus {
+        outline: none;
+        background: #ffffff;
+        border-color: #3498db;
+    }
+
+    .input-wrapper input::placeholder {
+        color: #95a5a6;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #7f8c8d;
+    }
+
+    .input-wrapper input:focus + .input-icon {
+        color: #3498db;
+    }
+
+    .btn-login {
+        width: 100%;
+        padding: 18px 24px;
+        font-size: 16px;
+        font-weight: 700;
+        background: #3498db;
+        color: #ffffff;
+        border: none;
+        cursor: pointer;
+        border-radius: 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: background 0.2s ease;
+        margin-top: 8px;
+    }
+
+    .btn-login:hover {
+        background: #2980b9;
+    }
+
+    .btn-login:active {
+        background: #21618c;
+    }
+
+    .btn-login:disabled {
+        background: #bdc3c7;
+        cursor: not-allowed;
+    }
+
+    .btn-login .spinner {
+        display: none;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-right: 8px;
+        vertical-align: middle;
+    }
+
+    .btn-login.loading .spinner {
+        display: inline-block;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .login-footer {
+        text-align: center;
+        margin-top: 32px;
+        padding-top: 24px;
+        border-top: 3px solid #ecf0f1;
+    }
+
+    .login-footer p {
+        color: #7f8c8d;
+        font-size: 14px;
+    }
+
+    .login-footer a {
+        color: #3498db;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.2s ease;
+    }
+
+    .login-footer a:hover {
+        color: #2980b9;
+    }
+
+    .color-bar {
+        display: flex;
+        margin-top: 32px;
+    }
+
+    .color-bar span {
+        flex: 1;
+        height: 6px;
+    }
+
+    .color-bar span:nth-child(1) { background: #3498db; }
+    .color-bar span:nth-child(2) { background: #2ecc71; }
+    .color-bar span:nth-child(3) { background: #f39c12; }
+    .color-bar span:nth-child(4) { background: #e74c3c; }
+
+    @media (max-width: 480px) {
+        .login-card {
+            padding: 36px 24px;
+        }
+
+        .login-header h2 {
+            font-size: 28px;
+        }
+
+        .flat-shape.shape-1 {
+            width: 250px;
+            height: 250px;
+        }
+
+        .flat-shape.shape-2 {
+            width: 180px;
+            height: 180px;
+        }
+
+        .flat-shape.shape-3 {
+            width: 120px;
+            height: 120px;
+        }
+
+        .flat-shape.shape-4 {
+            width: 100px;
+            height: 100px;
+        }
+    }
+</style>
+
+<div class="flat-bg">
+    <div class="flat-shape shape-1"></div>
+    <div class="flat-shape shape-2"></div>
+    <div class="flat-shape shape-3"></div>
+    <div class="flat-shape shape-4"></div>
+</div>
+
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <h2>欢迎回来</h2>
+            <p>登录您的账户以继续</p>
+        </div>
+
+        <form method="post" class="login-form" id="loginForm">
             {% csrf_token %}
+            
             <div class="form-group">
                 <label for="username">用户名</label>
-                <input type="text" id="username" name="username" required>
+                <div class="input-wrapper">
+                    <input type="text" id="username" name="username" placeholder="请输入用户名" required autofocus>
+                    <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </div>
             </div>
+
             <div class="form-group">
                 <label for="password">密码</label>
-                <input type="password" id="password" name="password" required>
+                <div class="input-wrapper">
+                    <input type="password" id="password" name="password" placeholder="请输入密码" required>
+                    <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                </div>
             </div>
-            <button type="submit" class="btn">登录</button>
+
+            <button type="submit" class="btn-login" id="loginBtn">
+                <span class="spinner"></span>
+                <span class="btn-text">登录</span>
+            </button>
         </form>
+
+        <div class="login-footer">
+            <p>还没有账户？ <a href="#">联系管理员</a></p>
+        </div>
+
+        <div class="color-bar">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
     </div>
+</div>
+
+<script>
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+        const btn = document.getElementById('loginBtn');
+        btn.classList.add('loading');
+        btn.disabled = true;
+    });
+</script>
 {% endblock %}

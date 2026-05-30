@@ -7,7 +7,39 @@ from django.utils import timezone
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST, require_GET
 from datetime import datetime, timedelta, time
-from .models import Court, CourtAvailability, Booking, Profile, Student, CourseBooking, CourseBookingStudent
+from .models import Court, CourtAvailability, Booking, Profile, Student, BookingStudent, CourtType
+import socket
+import struct
+
+
+def get_network_time():
+    try:
+        ntp_servers = ['ntp.aliyun.com', 'ntp.tencent.com']
+        for server in ntp_servers:
+            try:
+                client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                client.settimeout(1)
+                data = b'\x1b' + 47 * b'\x00'
+                client.sendto(data, (server, 123))
+                response, _ = client.recvfrom(1024)
+                client.close()
+                
+                if response:
+                    unpacked = struct.unpack('!12I', response[:48])
+                    timestamp = unpacked[10] - 2208988800
+                    return datetime.fromtimestamp(timestamp, tz=timezone.get_current_timezone())
+            except Exception:
+                continue
+    except Exception:
+        pass
+    return None
+
+
+def get_current_time():
+    network_time = get_network_time()
+    if network_time:
+        return network_time
+    return timezone.now()
 
 
 def is_admin_user(user):
@@ -41,7 +73,11 @@ def logout_view(request):
 def court_list(request):
     courts = Court.objects.all()
     today = timezone.now().date()
-    return render(request, 'booking/court_list.html', {'courts': courts, 'today': today})
+    return render(request, 'booking/court_list.html', {
+        'courts': courts,
+        'today': today,
+        'is_admin': is_admin_user(request.user)
+    })
 
 
 @login_required
@@ -76,14 +112,25 @@ def admin_dashboard(request):
         messages.error(request, '您没有权限访问此页面')
         return redirect('court_list')
     
+    return render(request, 'booking/admin_dashboard.html')
+
+
+@login_required
+def admin_statistics(request):
+    if not is_admin_user(request.user):
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
     courts_count = Court.objects.count()
     bookings_count = Booking.objects.count()
     availabilities_count = CourtAvailability.objects.count()
+    students_count = Student.objects.count()
     
-    return render(request, 'booking/admin_dashboard.html', {
+    return render(request, 'booking/admin_statistics.html', {
         'courts_count': courts_count,
         'bookings_count': bookings_count,
-        'availabilities_count': availabilities_count
+        'availabilities_count': availabilities_count,
+        'students_count': students_count
     })
 
 
@@ -93,8 +140,9 @@ def admin_court_list(request):
         messages.error(request, '您没有权限访问此页面')
         return redirect('court_list')
     
-    courts = Court.objects.all()
-    return render(request, 'booking/admin_court_list.html', {'courts': courts})
+    courts = Court.objects.select_related('court_type').all()
+    court_types = CourtType.objects.all()
+    return render(request, 'booking/admin_court_list.html', {'courts': courts, 'court_types': court_types})
 
 
 @login_required
@@ -106,12 +154,27 @@ def admin_court_add(request):
     if request.method == 'POST':
         name = request.POST.get('name')
         description = request.POST.get('description')
+        court_type_id = request.POST.get('court_type')
+        court_number = request.POST.get('court_number', '')
         
-        Court.objects.create(name=name, description=description)
+        court_type = None
+        if court_type_id:
+            try:
+                court_type = CourtType.objects.get(id=court_type_id)
+            except CourtType.DoesNotExist:
+                pass
+        
+        Court.objects.create(
+            name=name,
+            description=description,
+            court_type=court_type,
+            court_number=court_number
+        )
         messages.success(request, '场地添加成功')
         return redirect('admin_court_list')
     
-    return render(request, 'booking/admin_court_form.html')
+    court_types = CourtType.objects.all()
+    return render(request, 'booking/admin_court_form.html', {'court_types': court_types})
 
 
 @login_required
@@ -125,11 +188,23 @@ def admin_court_edit(request, court_id):
     if request.method == 'POST':
         court.name = request.POST.get('name')
         court.description = request.POST.get('description')
+        court_type_id = request.POST.get('court_type')
+        court.court_number = request.POST.get('court_number', '')
+        
+        if court_type_id:
+            try:
+                court.court_type = CourtType.objects.get(id=court_type_id)
+            except CourtType.DoesNotExist:
+                court.court_type = None
+        else:
+            court.court_type = None
+        
         court.save()
         messages.success(request, '场地更新成功')
         return redirect('admin_court_list')
     
-    return render(request, 'booking/admin_court_form.html', {'court': court})
+    court_types = CourtType.objects.all()
+    return render(request, 'booking/admin_court_form.html', {'court': court, 'court_types': court_types})
 
 
 @login_required
@@ -142,6 +217,66 @@ def admin_court_delete(request, court_id):
     court.delete()
     messages.success(request, '场地删除成功')
     return redirect('admin_court_list')
+
+
+@login_required
+def admin_court_type_list(request):
+    if not is_admin_user(request.user):
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    court_types = CourtType.objects.prefetch_related('courts').all()
+    return render(request, 'booking/admin_court_type_list.html', {'court_types': court_types})
+
+
+@login_required
+def admin_court_type_add(request):
+    if not is_admin_user(request.user):
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        if name:
+            CourtType.objects.create(name=name)
+            messages.success(request, '场地类型添加成功')
+        return redirect('admin_court_type_list')
+    
+    return render(request, 'booking/admin_court_type_form.html')
+
+
+@login_required
+def admin_court_type_edit(request, type_id):
+    if not is_admin_user(request.user):
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    court_type = get_object_or_404(CourtType, id=type_id)
+    
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        if name:
+            court_type.name = name
+            court_type.save()
+            messages.success(request, '场地类型更新成功')
+        return redirect('admin_court_type_list')
+    
+    return render(request, 'booking/admin_court_type_form.html', {'court_type': court_type})
+
+
+@login_required
+def admin_court_type_delete(request, type_id):
+    if not is_admin_user(request.user):
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    court_type = get_object_or_404(CourtType, id=type_id)
+    if court_type.is_default:
+        messages.error(request, '系统默认类型不能删除')
+    else:
+        court_type.delete()
+        messages.success(request, '场地类型删除成功')
+    return redirect('admin_court_type_list')
 
 
 @login_required
@@ -238,6 +373,8 @@ def admin_booking_add(request):
         date_str = request.POST.get('date')
         start_time_str = request.POST.get('start_time')
         end_time_str = request.POST.get('end_time')
+        booker_name = request.POST.get('booker_name')
+        booker_phone = request.POST.get('booker_phone')
         
         try:
             user = User.objects.get(username=username)
@@ -303,6 +440,8 @@ def admin_booking_add(request):
                 date=booking_date,
                 start_time=start_time,
                 end_time=end_time,
+                booker_name=booker_name,
+                booker_phone=booker_phone,
                 status='active'
             )
             
@@ -320,6 +459,31 @@ def admin_booking_add(request):
         'courts': Court.objects.all(),
         'users': User.objects.all(),
     })
+
+
+@login_required
+def admin_booking_edit(request, booking_id):
+    if not is_admin_user(request.user):
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('court_list')
+    
+    booking = get_object_or_404(Booking, id=booking_id, booking_type='court')
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'cancel':
+            booking.status = 'cancelled'
+            booking.save()
+            messages.success(request, '预约已取消')
+            return redirect('admin_bookings')
+        
+        if action == 'delete':
+            booking.delete()
+            messages.success(request, '预约已删除')
+            return redirect('admin_bookings')
+    
+    return render(request, 'booking/admin_booking_edit.html', {'booking': booking})
 
 
 @login_required
@@ -351,6 +515,8 @@ def get_time_slots(request):
         court_data = {
             'id': court.id,
             'name': court.name,
+            'court_number': court.court_number,
+            'court_type_name': court.court_type.name if court.court_type else None,
             'description': court.description,
             'is_available': availability is not None,
             'start_time': availability.start_time.strftime('%H:%M') if availability else None,
@@ -363,37 +529,67 @@ def get_time_slots(request):
                 court=court,
                 date=selected_date,
                 status='active'
-            ).values_list('start_time', 'end_time')
-            
-            booked_slots = set()
-            for start, end in bookings:
-                current = datetime.combine(selected_date, start)
-                end_dt = datetime.combine(selected_date, end)
+            )
+
+            booked_slots = {}
+            for booking in bookings:
+                current = datetime.combine(selected_date, booking.start_time)
+                end_dt = datetime.combine(selected_date, booking.end_time)
                 while current < end_dt:
-                    booked_slots.add(current.time())
+                    slot_info = {
+                        'booking_type': booking.booking_type,
+                        'booking_id': booking.id,
+                        'booker_name': booking.booker_name,
+                        'booker_phone': booking.booker_phone,
+                    }
+                    if booking.booking_type == 'course':
+                        students = list(booking.students.select_related('student').values(
+                            'student__name', 'student__phone', 'class_hours'
+                        ))
+                        slot_info['students'] = students
+                        slot_info['student_count'] = len(students)
+                        slot_info['total_class_hours'] = sum(s['class_hours'] for s in students)
+                    booked_slots[current.time()] = slot_info
                     current += timedelta(minutes=30)
-            
+
             current_time = datetime.combine(selected_date, availability.start_time)
             end_time_dt = datetime.combine(selected_date, availability.end_time)
-            
+
             while current_time < end_time_dt:
                 slot_time = current_time.time()
                 slot_end = (current_time + timedelta(minutes=30)).time()
-                
+
                 is_booked = slot_time in booked_slots
-                
-                court_data['time_slots'].append({
+                booking_info = booked_slots.get(slot_time, None)
+
+                slot_data = {
                     'start': slot_time.strftime('%H:%M'),
                     'end': slot_end.strftime('%H:%M'),
                     'label': f"{slot_time.strftime('%H:%M')}-{slot_end.strftime('%H:%M')}",
-                    'is_booked': is_booked
-                })
-                
+                    'is_booked': is_booked,
+                }
+                if booking_info:
+                    slot_data['booking_type'] = booking_info['booking_type']
+                    slot_data['booking_id'] = booking_info['booking_id']
+                    slot_data['booker_name'] = booking_info['booker_name']
+                    slot_data['booker_phone'] = booking_info['booker_phone']
+                    if booking_info['booking_type'] == 'course':
+                        slot_data['students'] = booking_info['students']
+                        slot_data['student_count'] = booking_info['student_count']
+                        slot_data['total_class_hours'] = booking_info['total_class_hours']
+
+                court_data['time_slots'].append(slot_data)
+
                 current_time += timedelta(minutes=30)
         
         data.append(court_data)
-    
-    return JsonResponse({'courts': data})
+
+    now = get_current_time()
+    return JsonResponse({
+        'courts': data,
+        'server_time': now.strftime('%Y-%m-%d %H:%M:%S'),
+        'server_date': now.strftime('%Y-%m-%d'),
+    })
 
 
 @login_required
@@ -409,8 +605,10 @@ def create_booking_api(request):
     date_str = data.get('date')
     start_time_str = data.get('start_time')
     end_time_str = data.get('end_time')
+    booker_name = data.get('booker_name')
+    booker_phone = data.get('booker_phone')
     
-    if not all([court_id, date_str, start_time_str, end_time_str]):
+    if not all([court_id, date_str, start_time_str, end_time_str, booker_name, booker_phone]):
         return JsonResponse({'error': '缺少必要参数'}, status=400)
     
     try:
@@ -455,6 +653,8 @@ def create_booking_api(request):
         date=booking_date,
         start_time=start_time,
         end_time=end_time,
+        booker_name=booker_name,
+        booker_phone=booker_phone,
         status='active'
     )
     
@@ -527,7 +727,7 @@ def admin_course_booking_list(request):
         return redirect('court_list')
     
     today = timezone.now().date()
-    bookings = CourseBooking.objects.all().select_related('court').order_by('-date', 'start_time')
+    bookings = Booking.objects.filter(booking_type='course').select_related('court').order_by('-date', 'start_time')
     return render(request, 'booking/admin_course_booking_list.html', {
         'bookings': bookings,
         'today': today,
@@ -589,7 +789,7 @@ def admin_course_booking_add(request):
                         'students': Student.objects.all(),
                     })
                 
-                conflicting = CourseBooking.objects.filter(
+                conflicting = Booking.objects.filter(
                     court=court,
                     date=booking_date,
                     status='active'
@@ -600,13 +800,14 @@ def admin_course_booking_add(request):
                 )
                 
                 if conflicting.exists():
-                    messages.error(request, '该时间段已有课程预约')
+                    messages.error(request, '该时间段已被预约')
                     return render(request, 'booking/admin_course_booking_form.html', {
                         'courts': Court.objects.all(),
                         'students': Student.objects.all(),
                     })
                 
-                booking = CourseBooking.objects.create(
+                booking = Booking.objects.create(
+                    booking_type='course',
                     court=court,
                     date=booking_date,
                     start_time=start_time,
@@ -624,7 +825,7 @@ def admin_course_booking_add(request):
         
         elif action == 'add_students':
             booking_id = request.POST.get('booking_id')
-            booking = get_object_or_404(CourseBooking, id=booking_id)
+            booking = get_object_or_404(Booking, id=booking_id, booking_type='course')
             
             student_ids = request.POST.getlist('students')
             class_hours = request.POST.get('class_hours')
@@ -667,7 +868,7 @@ def admin_course_booking_add(request):
                     student.total_class_hours -= hours
                     student.save()
                     
-                    CourseBookingStudent.objects.create(
+                    BookingStudent.objects.create(
                         booking=booking,
                         student=student,
                         class_hours=hours
@@ -692,7 +893,7 @@ def admin_course_booking_edit(request, booking_id):
         messages.error(request, '您没有权限访问此页面')
         return redirect('court_list')
     
-    booking = get_object_or_404(CourseBooking, id=booking_id)
+    booking = get_object_or_404(Booking, id=booking_id, booking_type='course')
     booking_students = booking.students.select_related('student').all()
     all_students = Student.objects.all()
     
@@ -702,7 +903,7 @@ def admin_course_booking_edit(request, booking_id):
         if action == 'remove_student':
             cs_id = request.POST.get('cs_id')
             try:
-                cs = CourseBookingStudent.objects.get(id=cs_id, booking=booking)
+                cs = BookingStudent.objects.get(id=cs_id, booking=booking)
                 student = cs.student
                 hours = cs.class_hours
                 
@@ -711,7 +912,7 @@ def admin_course_booking_edit(request, booking_id):
                 
                 cs.delete()
                 messages.success(request, f'已移除学员 {student.name}，退还 {hours} 课时')
-            except CourseBookingStudent.DoesNotExist:
+            except BookingStudent.DoesNotExist:
                 messages.error(request, '操作失败')
         
         elif action == 'add_students':
@@ -759,7 +960,7 @@ def admin_course_booking_edit(request, booking_id):
                     student.total_class_hours -= hours
                     student.save()
                     
-                    CourseBookingStudent.objects.create(
+                    BookingStudent.objects.create(
                         booking=booking,
                         student=student,
                         class_hours=hours
@@ -824,7 +1025,7 @@ def admin_course_booking_delete(request, booking_id):
         messages.error(request, '您没有权限访问此页面')
         return redirect('court_list')
     
-    booking = get_object_or_404(CourseBooking, id=booking_id)
+    booking = get_object_or_404(Booking, id=booking_id, booking_type='course')
     
     if booking.status == 'active':
         for cs in booking.students.all():

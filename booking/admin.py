@@ -1,13 +1,20 @@
 from django.contrib import admin
-from .models import Court, CourtAvailability, Booking, Student, CourseBooking, CourseBookingStudent
+from .models import Court, CourtAvailability, Booking, Student, BookingStudent, CourtType, Profile
+
+
+@admin.register(CourtType)
+class CourtTypeAdmin(admin.ModelAdmin):
+    list_display = ['name', 'is_default', 'created_at', 'updated_at']
+    list_filter = ['is_default']
+    search_fields = ['name']
 
 
 @admin.register(Court)
 class CourtAdmin(admin.ModelAdmin):
-    list_display = ['name', 'description', 'created_at', 'updated_at']
-    search_fields = ['name']
-    list_filter = ['created_at']
-    readonly_fields = ['name', 'description', 'created_at', 'updated_at']
+    list_display = ['name', 'court_type', 'court_number', 'description', 'created_at', 'updated_at']
+    search_fields = ['name', 'court_number']
+    list_filter = ['court_type', 'created_at']
+    readonly_fields = ['name', 'court_type', 'court_number', 'description', 'created_at', 'updated_at']
 
     def has_add_permission(self, request):
         return False
@@ -38,11 +45,11 @@ class CourtAvailabilityAdmin(admin.ModelAdmin):
 
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
-    list_display = ['user', 'court', 'date', 'start_time', 'end_time', 'status', 'created_at']
-    list_filter = ['court', 'date', 'status']
-    search_fields = ['user__username', 'court__name']
+    list_display = ['booking_type', 'user', 'court', 'date', 'start_time', 'end_time', 'booker_name', 'status', 'created_at']
+    list_filter = ['booking_type', 'court', 'date', 'status']
+    search_fields = ['user__username', 'court__name', 'booker_name']
     date_hierarchy = 'date'
-    readonly_fields = ['user', 'court', 'date', 'start_time', 'end_time', 'status', 'created_at', 'updated_at']
+    readonly_fields = ['booking_type', 'user', 'court', 'date', 'start_time', 'end_time', 'booker_name', 'booker_phone', 'status', 'created_at', 'updated_at']
 
     def has_add_permission(self, request):
         return False
@@ -71,25 +78,8 @@ class StudentAdmin(admin.ModelAdmin):
         return False
 
 
-@admin.register(CourseBooking)
-class CourseBookingAdmin(admin.ModelAdmin):
-    list_display = ['court', 'date', 'start_time', 'end_time', 'status', 'created_at']
-    list_filter = ['court', 'date', 'status']
-    date_hierarchy = 'date'
-    readonly_fields = ['court', 'date', 'start_time', 'end_time', 'status', 'created_at', 'updated_at']
-
-    def has_add_permission(self, request):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-
-@admin.register(CourseBookingStudent)
-class CourseBookingStudentAdmin(admin.ModelAdmin):
+@admin.register(BookingStudent)
+class BookingStudentAdmin(admin.ModelAdmin):
     list_display = ['booking', 'student', 'class_hours', 'created_at']
     list_filter = ['booking']
     readonly_fields = ['booking', 'student', 'class_hours', 'created_at']
@@ -102,3 +92,10 @@ class CourseBookingStudentAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ['user', 'user_type', 'created_at', 'updated_at']
+    list_filter = ['user_type']
+    search_fields = ['user__username']

@@ -1,0 +1,111 @@
+{% extends 'booking/base.html' %}
+
+{% block title %}编辑预约 - 体育场馆预约系统{% endblock %}
+
+{% block content %}
+<style>
+    .page-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius);
+        background-color: var(--gray-800);
+        color: white;
+        text-decoration: none;
+        transition: var(--transition);
+        flex-shrink: 0;
+    }
+    .back-btn:hover {
+        background-color: var(--gray-900);
+        transform: translateX(-2px);
+    }
+    .page-header-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: var(--gray-900);
+    }
+    .info-grid {
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        gap: 16px;
+        padding: 20px;
+        background: var(--gray-50);
+        border-radius: var(--radius);
+        margin-bottom: 24px;
+    }
+    .info-label {
+        font-weight: 600;
+        color: var(--gray-600);
+    }
+    .info-value {
+        color: var(--gray-900);
+    }
+    .action-btns {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+    }
+</style>
+
+<div class="page-header">
+    <a href="{% url 'admin_bookings' %}" class="back-btn" title="返回预约列表">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+        </svg>
+    </a>
+    <span class="page-header-title">场地预约详情</span>
+</div>
+
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <div class="info-grid">
+        <span class="info-label">场地</span>
+        <span class="info-value">{{ booking.court.name }}</span>
+        
+        <span class="info-label">日期</span>
+        <span class="info-value">{{ booking.date|date:"Y-m-d" }}</span>
+        
+        <span class="info-label">时间</span>
+        <span class="info-value">{{ booking.start_time|time:"H:i" }} - {{ booking.end_time|time:"H:i" }}</span>
+        
+        <span class="info-label">预约人</span>
+        <span class="info-value">{{ booking.booker_name }}</span>
+        
+        <span class="info-label">联系方式</span>
+        <span class="info-value">{{ booking.booker_phone }}</span>
+        
+        <span class="info-label">状态</span>
+        <span class="info-value">
+            {% if booking.status == 'active' %}
+                <span class="badge badge-success">有效</span>
+            {% elif booking.status == 'cancelled' %}
+                <span class="badge badge-danger">已取消</span>
+            {% endif %}
+        </span>
+    </div>
+
+    {% if booking.status == 'active' %}
+    <form method="post" style="display: inline;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="cancel">
+        <button type="submit" class="btn btn-warning" onclick="return confirm('确定要取消此预约吗？')">取消预约</button>
+    </form>
+    <form method="post" style="display: inline; margin-left: 12px;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="delete">
+        <button type="submit" class="btn btn-danger" onclick="return confirm('确定要删除此预约吗？此操作不可恢复')">删除预约</button>
+    </form>
+    {% endif %}
+    
+    <a href="{% url 'admin_bookings' %}" class="btn btn-outline" style="margin-left: 12px;">返回列表</a>
+</div>
+{% endblock %}
