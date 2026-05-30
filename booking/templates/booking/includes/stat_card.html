@@ -1,0 +1,24 @@
+{% comment %}
+统计卡片组件 - 统一统计数据展示样式
+
+用法:
+{% include 'booking/includes/stat_card.html' with value="100" label="标签文字" color="blue" icon_svg="<svg>...</svg>" %}
+
+参数:
+- value: 统计数值 (必填)
+- label: 标签文字 (必填)
+- color: 颜色主题 (可选: blue/green/orange/purple/red, 默认 blue)
+- icon_svg: SVG 图标 HTML (可选)
+{% endcomment %}
+
+<div class="stat-card {{ color|default:'blue' }}">
+    <div class="stat-card-content">
+        {% if icon_svg %}
+        <div class="stat-card-icon {{ color|default:'blue' }}">
+            {{ icon_svg }}
+        </div>
+        {% endif %}
+        <div class="stat-card-value">{{ value }}</div>
+        <div class="stat-card-label">{{ label }}</div>
+    </div>
+</div>

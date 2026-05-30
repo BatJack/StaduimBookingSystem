@@ -4,41 +4,6 @@
 
 {% block content %}
 <style>
-    .page-header {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        margin-bottom: 24px;
-        padding-bottom: 20px;
-        border-bottom: 3px solid #ecf0f1;
-    }
-    .back-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        height: 40px;
-        border-radius: 0;
-        background-color: #3498db;
-        color: white;
-        text-decoration: none;
-        transition: var(--transition);
-        flex-shrink: 0;
-        border: 3px solid transparent;
-    }
-    .back-btn:hover {
-        background-color: #2980b9;
-        border-color: #3498db;
-    }
-    .page-header-title {
-        font-size: 24px;
-        font-weight: 700;
-        color: #2c3e50;
-    }
-    .header-actions {
-        display: flex;
-        gap: 12px;
-    }
     .type-badge {
         display: inline-block;
         padding: 4px 10px;
@@ -50,74 +15,63 @@
     }
 </style>
 
-<div class="page-header">
-    <a href="{% url 'admin_dashboard' %}" class="back-btn" title="返回管理后台">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"/>
-        </svg>
-    </a>
-    <span class="page-header-title">场地管理</span>
-</div>
+{% include 'booking/includes/page_header.html' with title="场地管理" back_url="/manage/dashboard/" back_text="返回管理后台" %}
 
-    <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 style="margin: 0;">场地列表</h2>
-            <div class="header-actions">
-                <a href="{% url 'admin_court_type_list' %}" class="btn btn-outline">场地类型</a>
-                <a href="{% url 'admin_court_add' %}" class="btn btn-success">+ 添加场地</a>
-            </div>
+<div class="card">
+    <div class="table-header">
+        <h2>场地列表</h2>
+        <div class="header-actions">
+            <a href="{% url 'admin_court_type_list' %}" class="btn btn-outline">场地类型</a>
+            <a href="{% url 'admin_court_add' %}" class="btn btn-success">+ 添加场地</a>
         </div>
-
-        {% if courts %}
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width: 60px;">ID</th>
-                            <th>场地类型</th>
-                            <th>场地编号</th>
-                            <th>场地名称</th>
-                            <th>描述</th>
-                            <th>创建时间</th>
-                            <th style="width: 160px;">操作</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for court in courts %}
-                            <tr>
-                                <td>
-                                    <span class="badge badge-primary">{{ court.id }}</span>
-                                </td>
-                                <td>
-                                    {% if court.court_type %}
-                                        <span class="type-badge">{{ court.court_type.name }}</span>
-                                    {% else %}
-                                        <span style="color: #7f8c8d;">未设置</span>
-                                    {% endif %}
-                                </td>
-                                <td>{{ court.court_number|default:"-" }}</td>
-                                <td>
-                                    <strong>{{ court.name }}</strong>
-                                </td>
-                                <td>{{ court.description|default:"暂无描述" }}</td>
-                                <td>{{ court.created_at|date:"Y-m-d H:i" }}</td>
-                                <td>
-                                    <div class="action-btns">
-                                        <a href="{% url 'admin_court_edit' court.id %}" class="btn btn-sm btn-outline">编辑</a>
-                                        <a href="{% url 'admin_court_delete' court.id %}" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除这个场地吗？')">删除</a>
-                                    </div>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <div class="empty-state">
-                <div class="empty-state-icon">🏸</div>
-                <h3>暂无场地</h3>
-                <p>点击上方"添加场地"按钮创建第一个场地</p>
-            </div>
-        {% endif %}
     </div>
+
+    {% if courts %}
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">ID</th>
+                        <th>场地类型</th>
+                        <th>场地编号</th>
+                        <th>场地名称</th>
+                        <th>描述</th>
+                        <th>创建时间</th>
+                        <th style="width: 160px;">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for court in courts %}
+                        <tr>
+                            <td>
+                                <span class="badge badge-primary">{{ court.id }}</span>
+                            </td>
+                            <td>
+                                {% if court.court_type %}
+                                    <span class="type-badge">{{ court.court_type.name }}</span>
+                                {% else %}
+                                    <span style="color: #7f8c8d;">未设置</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ court.court_number|default:"-" }}</td>
+                            <td>
+                                <strong>{{ court.name }}</strong>
+                            </td>
+                            <td>{{ court.description|default:"暂无描述" }}</td>
+                            <td>{{ court.created_at|date:"Y-m-d H:i" }}</td>
+                            <td>
+                                <div class="action-btns">
+                                    <a href="{% url 'admin_court_edit' court.id %}" class="btn btn-sm btn-outline">编辑</a>
+                                    <a href="{% url 'admin_court_delete' court.id %}" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除这个场地吗？')">删除</a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        {% include 'booking/includes/empty_state.html' with icon="🏸" title="暂无场地" message="点击上方\"添加场地\"按钮创建第一个场地" %}
+    {% endif %}
+</div>
 {% endblock %}

@@ -1,0 +1,28 @@
+{% comment %}
+页面头部组件 - 统一页面标题和返回按钮样式
+
+用法:
+{% include 'booking/includes/page_header.html' with title="页面标题" back_url="返回链接" back_text="返回文字" %}
+
+可选参数:
+- title: 页面标题 (必填)
+- back_url: 返回链接 (可选，不传则不显示返回按钮)
+- back_text: 返回按钮文字 (可选，默认"返回")
+- actions: 右侧操作按钮 HTML (可选，通过 block 传入)
+{% endcomment %}
+
+<div class="page-header">
+    {% if back_url %}
+    <a href="{{ back_url }}" class="back-btn" title="{{ back_text|default:'返回' }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+        </svg>
+    </a>
+    {% endif %}
+    <span class="page-header-title">{{ title }}</span>
+    {% if actions %}
+    <div class="header-actions">
+        {{ actions }}
+    </div>
+    {% endif %}
+</div>

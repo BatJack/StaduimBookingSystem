@@ -1,0 +1,21 @@
+{% comment %}
+空状态组件 - 统一无数据时的显示样式
+
+用法:
+{% include 'booking/includes/empty_state.html' with icon="🏸" title="暂无数据" message="点击按钮添加数据" %}
+
+参数:
+- icon: 图标 emoji 或 HTML (可选，默认 📋)
+- title: 标题文字 (可选，默认"暂无数据")
+- message: 描述文字 (可选)
+{% endcomment %}
+
+<div class="empty-state">
+    <div class="empty-state-icon">{{ icon|default:"📋" }}</div>
+    {% if title %}
+    <h3>{{ title }}</h3>
+    {% endif %}
+    {% if message %}
+    <p>{{ message }}</p>
+    {% endif %}
+</div>
