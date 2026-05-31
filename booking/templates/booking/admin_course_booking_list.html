@@ -3,52 +3,14 @@
 {% block title %}课程预约 - 体育场馆预约系统{% endblock %}
 
 {% block content %}
-<style>
-    .page-header {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        margin-bottom: 24px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid var(--gray-200);
-    }
-    .back-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        height: 40px;
-        border-radius: var(--radius);
-        background-color: var(--gray-800);
-        color: white;
-        text-decoration: none;
-        transition: var(--transition);
-        flex-shrink: 0;
-    }
-    .back-btn:hover {
-        background-color: var(--gray-900);
-        transform: translateX(-2px);
-    }
-    .page-header-title {
-        font-size: 24px;
-        font-weight: 600;
-        color: var(--gray-900);
-    }
-</style>
-
-<div class="page-header">
-    <a href="{% url 'admin_dashboard' %}" class="back-btn" title="返回管理后台">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"/>
-        </svg>
-    </a>
-    <span class="page-header-title">课程预约</span>
-</div>
+{% include 'booking/includes/page_header.html' with title="课程预约" back_url="/manage/dashboard/" back_text="返回管理后台" %}
 
 <div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2 style="margin: 0;">预约列表</h2>
-        <a href="{% url 'admin_course_booking_add' %}" class="btn btn-success">+ 新增预约</a>
+    <div class="table-header">
+        <h2>预约列表</h2>
+        <div class="header-actions">
+            <a href="{% url 'admin_course_booking_add' %}" class="btn btn-success">+ 新增预约</a>
+        </div>
     </div>
 
     {% if bookings %}
@@ -100,11 +62,7 @@
             </table>
         </div>
     {% else %}
-        <div class="empty-state">
-            <div class="empty-state-icon">📋</div>
-            <h3>暂无课程预约</h3>
-            <p>点击上方"新增预约"按钮创建课程预约</p>
-        </div>
+        {% include 'booking/includes/empty_state.html' with icon="📋" title="暂无课程预约" message="点击上方\"新增预约\"按钮创建课程预约" %}
     {% endif %}
 </div>
 {% endblock %}

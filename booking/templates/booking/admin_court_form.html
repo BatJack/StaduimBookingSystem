@@ -4,36 +4,6 @@
 
 {% block content %}
 <style>
-    .page-header {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        margin-bottom: 24px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid var(--gray-200);
-    }
-    .back-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        height: 40px;
-        border-radius: var(--radius);
-        background-color: var(--gray-800);
-        color: white;
-        text-decoration: none;
-        transition: var(--transition);
-        flex-shrink: 0;
-    }
-    .back-btn:hover {
-        background-color: var(--gray-900);
-        transform: translateX(-2px);
-    }
-    .page-header-title {
-        font-size: 24px;
-        font-weight: 600;
-        color: var(--gray-900);
-    }
     .form-row {
         display: flex;
         gap: 16px;
@@ -43,45 +13,38 @@
     }
 </style>
 
-<div class="page-header">
-    <a href="{% url 'admin_court_list' %}" class="back-btn" title="返回场地列表">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"/>
-        </svg>
-    </a>
-    <span class="page-header-title">{% if court %}编辑场地{% else %}添加场地{% endif %}</span>
-</div>
+{% include 'booking/includes/page_header.html' with title="编辑场地" back_url="/manage/courts/" back_text="返回场地列表" %}
 
-    <div class="card" style="max-width: 600px; margin: 0 auto;">
-        <form method="post">
-            {% csrf_token %}
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="court_type">场地类型</label>
-                    <select id="court_type" name="court_type">
-                        <option value="">-- 请选择 --</option>
-                        {% for ct in court_types %}
-                            <option value="{{ ct.id }}" {% if court and court.court_type_id == ct.id %}selected{% endif %}>{{ ct.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="court_number">场地编号</label>
-                    <input type="text" id="court_number" name="court_number" value="{% if court %}{{ court.court_number }}{% endif %}" placeholder="如：1号场、A区">
-                </div>
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-row">
+            <div class="form-group">
+                <label for="court_type">场地类型</label>
+                <select id="court_type" name="court_type">
+                    <option value="">-- 请选择 --</option>
+                    {% for ct in court_types %}
+                        <option value="{{ ct.id }}" {% if court and court.court_type_id == ct.id %}selected{% endif %}>{{ ct.name }}</option>
+                    {% endfor %}
+                </select>
             </div>
             <div class="form-group">
-                <label for="name">场地名称</label>
-                <input type="text" id="name" name="name" value="{% if court %}{{ court.name }}{% endif %}" placeholder="请输入场地名称" required>
+                <label for="court_number">场地编号</label>
+                <input type="text" id="court_number" name="court_number" value="{% if court %}{{ court.court_number }}{% endif %}" placeholder="如：1号场、A区">
             </div>
-            <div class="form-group">
-                <label for="description">场地描述</label>
-                <textarea id="description" name="description" rows="4" placeholder="请输入场地描述">{% if court %}{{ court.description }}{% endif %}</textarea>
-            </div>
-            <div style="display: flex; gap: 12px; margin-top: 24px;">
-                <button type="submit" class="btn btn-success">{% if court %}更新{% else %}添加{% endif %}</button>
-                <a href="{% url 'admin_court_list' %}" class="btn btn-outline">取消</a>
-            </div>
-        </form>
-    </div>
+        </div>
+        <div class="form-group">
+            <label for="name">场地名称</label>
+            <input type="text" id="name" name="name" value="{% if court %}{{ court.name }}{% endif %}" placeholder="请输入场地名称" required>
+        </div>
+        <div class="form-group">
+            <label for="description">场地描述</label>
+            <textarea id="description" name="description" rows="4" placeholder="请输入场地描述">{% if court %}{{ court.description }}{% endif %}</textarea>
+        </div>
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+            <button type="submit" class="btn btn-success">{% if court %}更新{% else %}添加{% endif %}</button>
+            <a href="{% url 'admin_court_list' %}" class="btn btn-outline">取消</a>
+        </div>
+    </form>
+</div>
 {% endblock %}

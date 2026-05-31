@@ -4,29 +4,12 @@
 
 {% block content %}
 <style>
-    @media (prefers-reduced-motion: reduce) {
-        *,
-        *::before,
-        *::after {
-            animation-duration: 0.01ms !important;
-            animation-iteration-count: 1 !important;
-            transition-duration: 0.01ms !important;
-        }
-    }
-
-    .statistics-container {
-        max-width: 1000px;
-        margin: 40px auto;
-        padding: 0 20px;
-    }
-
     .statistics-card {
         background: var(--bg-secondary);
         border-radius: var(--radius-lg);
         padding: 48px 40px;
         box-shadow: var(--shadow-lg);
         border: 1px solid var(--border-color);
-        animation: cardEntrance 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
         overflow: hidden;
     }
@@ -41,21 +24,9 @@
         background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
     }
 
-    @keyframes cardEntrance {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
     .statistics-header {
         text-align: center;
         margin-bottom: 40px;
-        animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.1s both;
     }
 
     .statistics-header h1 {
@@ -72,33 +43,6 @@
         font-size: 15px;
     }
 
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .back-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        color: var(--text-muted);
-        text-decoration: none;
-        font-size: 14px;
-        font-weight: 500;
-        margin-bottom: 24px;
-        transition: color 0.25s ease;
-    }
-
-    .back-link:hover {
-        color: var(--primary);
-    }
-
     .stat-cards {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -113,13 +57,7 @@
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
         overflow: hidden;
-        animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
     }
-
-    .stat-card:nth-child(1) { animation-delay: 0.2s; }
-    .stat-card:nth-child(2) { animation-delay: 0.25s; }
-    .stat-card:nth-child(3) { animation-delay: 0.3s; }
-    .stat-card:nth-child(4) { animation-delay: 0.35s; }
 
     .stat-card::before {
         content: '';
@@ -221,7 +159,6 @@
         position: absolute;
         border-radius: 50%;
         opacity: 0.05;
-        animation: float 6s ease-in-out infinite;
     }
 
     .sports-decoration::before {
@@ -238,24 +175,9 @@
         background: var(--secondary);
         bottom: -100px;
         left: -50px;
-        animation-delay: 3s;
-    }
-
-    @keyframes float {
-        0%, 100% {
-            transform: translateY(0) scale(1);
-        }
-        50% {
-            transform: translateY(-20px) scale(1.05);
-        }
     }
 
     @media (max-width: 768px) {
-        .statistics-container {
-            margin: 30px auto;
-            padding: 0 16px;
-        }
-
         .statistics-card {
             padding: 32px 24px;
         }
@@ -295,79 +217,24 @@
     }
 </style>
 
-<div class="statistics-container">
-    <div class="statistics-card">
-        <div class="sports-decoration"></div>
+{% include 'booking/includes/page_header.html' with title="数据统计" back_url="/manage/dashboard/" back_text="返回管理后台" %}
+
+<div class="statistics-card">
+    <div class="sports-decoration"></div>
+    
+    <div class="statistics-header">
+        <h1>数据统计</h1>
+        <p>系统运营数据概览</p>
+    </div>
+
+    <div class="stat-cards">
+        {% include 'booking/includes/stat_card.html' with value=courts_count|default:"0" label="场地总数" color="blue" icon_svg='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/></svg>' %}
         
-        <a href="{% url 'admin_dashboard' %}" class="back-link">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="19" y1="12" x2="5" y2="12"/>
-                <polyline points="12 19 5 12 12 5"/>
-            </svg>
-            返回管理后台
-        </a>
-
-        <div class="statistics-header">
-            <h1>数据统计</h1>
-            <p>系统运营数据概览</p>
-        </div>
-
-        <div class="stat-cards">
-            <div class="stat-card blue">
-                <div class="stat-card-content">
-                    <div class="stat-card-icon blue">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="2" y="7" width="20" height="14" rx="2"/>
-                            <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
-                            <line x1="12" y1="12" x2="12" y2="16"/>
-                        </svg>
-                    </div>
-                    <div class="stat-card-value">{{ courts_count|default:"0" }}</div>
-                    <div class="stat-card-label">场地总数</div>
-                </div>
-            </div>
-            <div class="stat-card green">
-                <div class="stat-card-content">
-                    <div class="stat-card-icon green">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="4" width="18" height="18" rx="2"/>
-                            <line x1="16" y1="2" x2="16" y2="6"/>
-                            <line x1="8" y1="2" x2="8" y2="6"/>
-                            <line x1="3" y1="10" x2="21" y2="10"/>
-                            <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>
-                        </svg>
-                    </div>
-                    <div class="stat-card-value">{{ bookings_count|default:"0" }}</div>
-                    <div class="stat-card-label">预约总数</div>
-                </div>
-            </div>
-            <div class="stat-card orange">
-                <div class="stat-card-content">
-                    <div class="stat-card-icon orange">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"/>
-                            <polyline points="12 6 12 12 16 14"/>
-                        </svg>
-                    </div>
-                    <div class="stat-card-value">{{ availabilities_count|default:"0" }}</div>
-                    <div class="stat-card-label">可用时段</div>
-                </div>
-            </div>
-            <div class="stat-card purple">
-                <div class="stat-card-content">
-                    <div class="stat-card-icon purple">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                            <circle cx="9" cy="7" r="4"/>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                        </svg>
-                    </div>
-                    <div class="stat-card-value">{{ students_count|default:"0" }}</div>
-                    <div class="stat-card-label">学员总数</div>
-                </div>
-            </div>
-        </div>
+        {% include 'booking/includes/stat_card.html' with value=bookings_count|default:"0" label="预约总数" color="green" icon_svg='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>' %}
+        
+        {% include 'booking/includes/stat_card.html' with value=availabilities_count|default:"0" label="可用时段" color="orange" icon_svg='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' %}
+        
+        {% include 'booking/includes/stat_card.html' with value=students_count|default:"0" label="学员总数" color="purple" icon_svg='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' %}
     </div>
 </div>
 {% endblock %}
