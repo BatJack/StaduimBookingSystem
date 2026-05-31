@@ -789,13 +789,19 @@
                 font-size: 16px;
             }
             .nav {
-                gap: 4px;
+                gap: 8px;
                 flex-wrap: wrap;
                 justify-content: center;
+                margin-top: 8px;
+                width: 100%;
             }
             .nav a {
-                padding: 6px 12px;
-                font-size: 12px;
+                padding: 10px 16px;
+                font-size: 14px;
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
             .container {
                 padding: 16px;
@@ -966,17 +972,24 @@
         @media (max-width: 480px) {
             .header .container {
                 padding: 0 12px;
-                height: 52px;
+                height: auto;
+                flex-wrap: wrap;
+                gap: 8px;
+                padding-top: 12px;
+                padding-bottom: 12px;
             }
             .header h1 {
-                font-size: 14px;
+                font-size: 16px;
             }
             .nav {
-                gap: 4px;
+                gap: 8px;
+                width: 100%;
+                justify-content: center;
             }
             .nav a {
-                padding: 6px 10px;
-                font-size: 11px;
+                padding: 10px 14px;
+                font-size: 13px;
+                min-height: 44px;
             }
             .container {
                 padding: 12px;
@@ -997,7 +1010,9 @@
             <div class="nav">
                 {% if user.is_authenticated %}
                     <a href="{% url 'court_list' %}">场地列表</a>
-                    <a href="{% url 'my_bookings' %}">我的预约</a>
+                    {% if user.profile.user_type != 'admin' %}
+                        <a href="{% url 'my_bookings' %}">我的预约</a>
+                    {% endif %}
                     {% if user.profile.user_type == 'admin' %}
                         <a href="{% url 'admin_dashboard' %}">管理后台</a>
                     {% endif %}
