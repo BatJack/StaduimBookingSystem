@@ -4,52 +4,52 @@
 
 {% block content %}
 <style>
-    .flat-bg {
+    .login-page-bg {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: #f5f5f5;
+        background: var(--bg-secondary);
         z-index: -1;
     }
 
-    .flat-shape {
+    .login-bg-shape {
         position: absolute;
         z-index: 0;
     }
 
-    .flat-shape.shape-1 {
+    .login-bg-shape.shape-1 {
         width: 400px;
         height: 400px;
-        background: #3498db;
+        background: var(--theme-primary);
         top: -100px;
         right: -100px;
         border-radius: 50%;
     }
 
-    .flat-shape.shape-2 {
+    .login-bg-shape.shape-2 {
         width: 300px;
         height: 300px;
-        background: #2ecc71;
+        background: var(--theme-success);
         bottom: -80px;
         left: -80px;
         border-radius: 50%;
     }
 
-    .flat-shape.shape-3 {
+    .login-bg-shape.shape-3 {
         width: 200px;
         height: 200px;
-        background: #e74c3c;
+        background: var(--theme-danger);
         top: 40%;
         left: 10%;
         transform: rotate(45deg);
     }
 
-    .flat-shape.shape-4 {
+    .login-bg-shape.shape-4 {
         width: 150px;
         height: 150px;
-        background: #f39c12;
+        background: var(--theme-warning);
         bottom: 30%;
         right: 15%;
         border-radius: 50%;
@@ -68,7 +68,7 @@
     .login-card {
         width: 100%;
         max-width: 400px;
-        background: #ffffff;
+        background: var(--bg-primary);
         padding: 48px 40px;
         border-radius: 0;
         position: relative;
@@ -81,7 +81,7 @@
         left: 0;
         width: 6px;
         height: 100%;
-        background: #3498db;
+        background: var(--theme-primary);
     }
 
     .login-header {
@@ -92,13 +92,13 @@
     .login-header h2 {
         font-size: 32px;
         font-weight: 700;
-        color: #2c3e50;
+        color: var(--text-primary);
         margin-bottom: 8px;
         letter-spacing: -0.5px;
     }
 
     .login-header p {
-        color: #7f8c8d;
+        color: var(--text-secondary);
         font-size: 15px;
     }
 
@@ -108,55 +108,55 @@
         gap: 24px;
     }
 
-    .form-group {
+    .login-form .form-group {
         position: relative;
     }
 
-    .form-group label {
+    .login-form .form-group label {
         display: block;
         margin-bottom: 10px;
         font-weight: 600;
-        color: #2c3e50;
+        color: var(--text-primary);
         font-size: 14px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
 
-    .input-wrapper {
+    .login-input-wrapper {
         position: relative;
     }
 
-    .input-wrapper input {
+    .login-input-wrapper input {
         width: 100%;
         padding: 16px 16px 16px 50px;
-        background: #ecf0f1;
+        background: var(--theme-border-light);
         border: 3px solid transparent;
         font-size: 15px;
-        color: #2c3e50;
+        color: var(--text-primary);
         border-radius: 0;
-        transition: all 0.2s ease;
+        transition: var(--transition);
     }
 
-    .input-wrapper input:focus {
+    .login-input-wrapper input:focus {
         outline: none;
-        background: #ffffff;
-        border-color: #3498db;
+        background: var(--bg-primary);
+        border-color: var(--theme-primary);
     }
 
-    .input-wrapper input::placeholder {
-        color: #95a5a6;
+    .login-input-wrapper input::placeholder {
+        color: var(--gray-400);
     }
 
-    .input-icon {
+    .login-input-icon {
         position: absolute;
         left: 16px;
         top: 50%;
         transform: translateY(-50%);
-        color: #7f8c8d;
+        color: var(--text-secondary);
     }
 
-    .input-wrapper input:focus + .input-icon {
-        color: #3498db;
+    .login-input-wrapper input:focus + .login-input-icon {
+        color: var(--theme-primary);
     }
 
     .btn-login {
@@ -164,8 +164,8 @@
         padding: 18px 24px;
         font-size: 16px;
         font-weight: 700;
-        background: #3498db;
-        color: #ffffff;
+        background: var(--theme-primary);
+        color: var(--bg-primary);
         border: none;
         cursor: pointer;
         border-radius: 0;
@@ -176,7 +176,7 @@
     }
 
     .btn-login:hover {
-        background: #2980b9;
+        background: var(--theme-primary-hover);
     }
 
     .btn-login:active {
@@ -184,27 +184,27 @@
     }
 
     .btn-login:disabled {
-        background: #bdc3c7;
+        background: var(--theme-border);
         cursor: not-allowed;
     }
 
-    .btn-login .spinner {
+    .btn-login .login-spinner {
         display: none;
         width: 20px;
         height: 20px;
         border: 3px solid rgba(255, 255, 255, 0.3);
         border-top-color: white;
         border-radius: 50%;
-        animation: spin 0.8s linear infinite;
+        animation: login-spin 0.8s linear infinite;
         margin-right: 8px;
         vertical-align: middle;
     }
 
-    .btn-login.loading .spinner {
+    .btn-login.loading .login-spinner {
         display: inline-block;
     }
 
-    @keyframes spin {
+    @keyframes login-spin {
         to { transform: rotate(360deg); }
     }
 
@@ -212,39 +212,101 @@
         text-align: center;
         margin-top: 32px;
         padding-top: 24px;
-        border-top: 3px solid #ecf0f1;
+        border-top: 3px solid var(--theme-border-light);
     }
 
     .login-footer p {
-        color: #7f8c8d;
+        color: var(--text-secondary);
         font-size: 14px;
     }
 
     .login-footer a {
-        color: #3498db;
+        color: var(--theme-primary);
         text-decoration: none;
         font-weight: 600;
         transition: color 0.2s ease;
     }
 
     .login-footer a:hover {
-        color: #2980b9;
+        color: var(--theme-primary-hover);
     }
 
-    .color-bar {
+    .login-color-bar {
         display: flex;
         margin-top: 32px;
     }
 
-    .color-bar span {
+    .login-color-bar span {
         flex: 1;
         height: 6px;
     }
 
-    .color-bar span:nth-child(1) { background: #3498db; }
-    .color-bar span:nth-child(2) { background: #2ecc71; }
-    .color-bar span:nth-child(3) { background: #f39c12; }
-    .color-bar span:nth-child(4) { background: #e74c3c; }
+    .login-color-bar span:nth-child(1) { background: var(--theme-primary); }
+    .login-color-bar span:nth-child(2) { background: var(--theme-success); }
+    .login-color-bar span:nth-child(3) { background: var(--theme-warning); }
+    .login-color-bar span:nth-child(4) { background: var(--theme-danger); }
+
+    .login-remember {
+        margin-top: -8px;
+    }
+
+    .login-checkbox-label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .login-checkbox-label input[type="checkbox"] {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        height: 0;
+        width: 0;
+    }
+
+    .login-checkbox-custom {
+        position: relative;
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        background: var(--theme-border-light);
+        border: 2px solid var(--theme-border);
+        margin-right: 10px;
+        transition: var(--transition);
+    }
+
+    .login-checkbox-custom::after {
+        content: '';
+        position: absolute;
+        display: none;
+        left: 6px;
+        top: 2px;
+        width: 5px;
+        height: 10px;
+        border: solid var(--bg-primary);
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+
+    .login-checkbox-label input:checked + .login-checkbox-custom {
+        background: var(--theme-primary);
+        border-color: var(--theme-primary);
+    }
+
+    .login-checkbox-label input:checked + .login-checkbox-custom::after {
+        display: block;
+    }
+
+    .login-checkbox-label:hover .login-checkbox-custom {
+        border-color: var(--theme-primary);
+    }
+
+    .login-checkbox-text {
+        font-size: 14px;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
 
     @media (max-width: 480px) {
         .login-card {
@@ -255,33 +317,33 @@
             font-size: 28px;
         }
 
-        .flat-shape.shape-1 {
+        .login-bg-shape.shape-1 {
             width: 250px;
             height: 250px;
         }
 
-        .flat-shape.shape-2 {
+        .login-bg-shape.shape-2 {
             width: 180px;
             height: 180px;
         }
 
-        .flat-shape.shape-3 {
+        .login-bg-shape.shape-3 {
             width: 120px;
             height: 120px;
         }
 
-        .flat-shape.shape-4 {
+        .login-bg-shape.shape-4 {
             width: 100px;
             height: 100px;
         }
     }
 </style>
 
-<div class="flat-bg">
-    <div class="flat-shape shape-1"></div>
-    <div class="flat-shape shape-2"></div>
-    <div class="flat-shape shape-3"></div>
-    <div class="flat-shape shape-4"></div>
+<div class="login-page-bg">
+    <div class="login-bg-shape shape-1"></div>
+    <div class="login-bg-shape shape-2"></div>
+    <div class="login-bg-shape shape-3"></div>
+    <div class="login-bg-shape shape-4"></div>
 </div>
 
 <div class="login-container">
@@ -296,9 +358,9 @@
             
             <div class="form-group">
                 <label for="username">用户名</label>
-                <div class="input-wrapper">
+                <div class="login-input-wrapper">
                     <input type="text" id="username" name="username" placeholder="请输入用户名" required autofocus>
-                    <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg class="login-input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                         <circle cx="12" cy="7" r="4"/>
                     </svg>
@@ -307,17 +369,25 @@
 
             <div class="form-group">
                 <label for="password">密码</label>
-                <div class="input-wrapper">
+                <div class="login-input-wrapper">
                     <input type="password" id="password" name="password" placeholder="请输入密码" required>
-                    <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg class="login-input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                         <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                     </svg>
                 </div>
             </div>
 
+            <div class="form-group login-remember">
+                <label class="login-checkbox-label">
+                    <input type="checkbox" id="rememberMe" name="remember_me">
+                    <span class="login-checkbox-custom"></span>
+                    <span class="login-checkbox-text">记住我</span>
+                </label>
+            </div>
+
             <button type="submit" class="btn-login" id="loginBtn">
-                <span class="spinner"></span>
+                <span class="login-spinner"></span>
                 <span class="btn-text">登录</span>
             </button>
         </form>
@@ -326,7 +396,7 @@
             <p>还没有账户？ <a href="#">联系管理员</a></p>
         </div>
 
-        <div class="color-bar">
+        <div class="login-color-bar">
             <span></span>
             <span></span>
             <span></span>
@@ -336,10 +406,48 @@
 </div>
 
 <script>
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
-        const btn = document.getElementById('loginBtn');
-        btn.classList.add('loading');
-        btn.disabled = true;
-    });
+    (function() {
+        const form = document.getElementById('loginForm');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const rememberMeCheckbox = document.getElementById('rememberMe');
+        const loginBtn = document.getElementById('loginBtn');
+
+        function loadSavedCredentials() {
+            const savedUsername = localStorage.getItem('rememberedUsername');
+            const savedPassword = localStorage.getItem('rememberedPassword');
+            
+            if (savedUsername && savedPassword) {
+                usernameInput.value = savedUsername;
+                passwordInput.value = savedPassword;
+                rememberMeCheckbox.checked = true;
+            }
+        }
+
+        function saveCredentials() {
+            if (rememberMeCheckbox.checked) {
+                localStorage.setItem('rememberedUsername', usernameInput.value);
+                localStorage.setItem('rememberedPassword', passwordInput.value);
+            } else {
+                localStorage.removeItem('rememberedUsername');
+                localStorage.removeItem('rememberedPassword');
+            }
+        }
+
+        loadSavedCredentials();
+
+        form.addEventListener('submit', function(e) {
+            saveCredentials();
+            loginBtn.classList.add('loading');
+            loginBtn.disabled = true;
+        });
+
+        rememberMeCheckbox.addEventListener('change', function() {
+            if (!this.checked) {
+                localStorage.removeItem('rememberedUsername');
+                localStorage.removeItem('rememberedPassword');
+            }
+        });
+    })();
 </script>
 {% endblock %}

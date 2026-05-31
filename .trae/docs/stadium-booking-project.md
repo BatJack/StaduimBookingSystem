@@ -16,6 +16,11 @@
 │  ├── login.html         # 登录页                               │
 │  ├── court_list.html    # 场地列表 + 矩阵式预约界面              │
 │  ├── my_bookings.html   # 我的预约                             │
+│  ├── includes/          # 可复用组件                           │
+│  │   ├── page_header.html   # 页面头部组件                     │
+│  │   ├── stat_card.html     # 统计卡片组件                     │
+│  │   ├── data_table.html    # 数据表格组件                     │
+│  │   └── empty_state.html   # 空状态组件                       │
 │  └── admin_*.html       # 管理后台页面                         │
 └─────────────────────────────────────────────────────────────────┘
                               │
@@ -49,6 +54,7 @@
 │                      数据模型 (booking/models.py)                 │
 │  Profile                # 用户类型表 (admin/regular)            │
 │  Student                # 学员信息表                            │
+│  CourtType              # 场地类型表                            │
 │  Court                  # 场地表                                │
 │  CourtAvailability      # 可预约时间段表                        │
 │  Booking                # 统一预约表 (场地预约/课程预约)         │
@@ -65,42 +71,82 @@ StaduimBookingSystem/
 ├── manage.py                     # Django项目管理脚本
 ├── db.sqlite3                    # SQLite数据库文件
 ├── create_user.py                # 创建用户脚本 (支持普通用户/管理员)
+├── create_user_cli.py            # 创建用户CLI版本
+├── requirements.txt              # Python依赖列表
 ├── README.md                     # 项目说明文档
 ├── .gitignore                    # Git忽略配置
-├── 关闭防火墙.bat                 # 一键关闭防火墙
-├── 开启防火墙.bat                 # 一键开启防火墙
+├── update.sh                     # 服务器更新脚本
 │
 ├── stadium_booking/              # Django项目配置
-│   ├── settings.py               # 项目设置 (INSTALLED_APPS、缓存会话等)
+│   ├── settings.py               # 项目设置 (开发环境)
+│   ├── settings_production.py    # 项目设置 (生产环境)
 │   ├── urls.py                   # 主URL路由 (包含booking.urls)
 │   ├── wsgi.py                   # WSGI部署配置
 │   └── asgi.py                   # ASGI部署配置
 │
-└── booking/                      # 核心应用
-    ├── models.py                 # 数据模型
-    ├── views.py                  # 视图函数 (所有业务逻辑)
-    ├── urls.py                   # 应用URL路由
-    ├── admin.py                  # Django Admin配置 (只读)
-    │
-    └── templates/booking/       # HTML模板
-        ├── base.html              # 基础模板 (全局CSS、响应式设计)
-        ├── login.html             # 登录页
-        ├── court_list.html        # 场地列表 (矩阵式预约界面)
-        ├── my_bookings.html       # 我的预约
-        ├── admin_dashboard.html    # 管理后台首页 (功能入口)
-        ├── admin_statistics.html   # 数据统计页面
-        ├── admin_court_list.html   # 场地管理列表
-        ├── admin_court_form.html   # 添加/编辑场地
-        ├── admin_availability_list.html  # 时间段管理
-        ├── admin_availability_form.html # 添加/编辑时间段
-        ├── admin_bookings.html     # 预约管理列表
-        ├── admin_booking_form.html # 管理员添加预约
-        ├── admin_booking_edit.html # 预约详情管理
-        ├── admin_student_list.html # 学员管理列表
-        ├── admin_student_form.html # 添加/编辑学员
-        ├── admin_course_booking_list.html  # 课程预约列表
-        ├── admin_course_booking_form.html  # 新增课程预约
-        └── admin_course_booking_edit.html  # 课程预约管理
+├── booking/                      # 核心应用
+│   ├── models.py                 # 数据模型
+│   ├── views.py                  # 视图函数 (所有业务逻辑)
+│   ├── urls.py                   # 应用URL路由
+│   ├── tests.py                  # 单元测试
+│   ├── admin.py                  # Django Admin配置 (只读)
+│   ├── apps.py                   # 应用配置
+│   │
+│   ├── migrations/               # 数据库迁移文件
+│   │   ├── 0001_initial.py
+│   │   ├── 0002_profile.py
+│   │   ├── 0003_student_coursebooking_coursebookingstudent.py
+│   │   ├── 0004_booking_booker_name_booking_booker_phone.py
+│   │   ├── 0005_remove_coursebookingstudent_booking_and_more.py
+│   │   ├── 0006_add_court_type.py
+│   │   └── 0007_add_default_court_types.py
+│   │
+│   └── templates/booking/        # HTML模板
+│       ├── base.html              # 基础模板 (全局CSS、响应式设计)
+│       ├── login.html             # 登录页
+│       ├── court_list.html        # 场地列表 (矩阵式预约界面)
+│       ├── booking_form.html      # 预约表单
+│       ├── my_bookings.html       # 我的预约
+│       │
+│       ├── includes/              # 可复用组件
+│       │   ├── page_header.html   # 页面头部组件
+│       │   ├── stat_card.html     # 统计卡片组件
+│       │   ├── data_table.html    # 数据表格组件
+│       │   └── empty_state.html   # 空状态组件
+│       │
+│       └── admin_*.html           # 管理后台页面
+│           ├── admin_dashboard.html    # 管理后台首页 (功能入口)
+│           ├── admin_statistics.html   # 数据统计页面
+│           ├── admin_court_type_list.html   # 场地类型管理列表
+│           ├── admin_court_type_form.html   # 添加/编辑场地类型
+│           ├── admin_court_list.html   # 场地管理列表
+│           ├── admin_court_form.html   # 添加/编辑场地
+│           ├── admin_availability_list.html  # 时间段管理
+│           ├── admin_availability_form.html # 添加/编辑时间段
+│           ├── admin_bookings.html     # 预约管理列表
+│           ├── admin_booking_form.html # 管理员添加预约
+│           ├── admin_booking_edit.html # 预约详情管理
+│           ├── admin_student_list.html # 学员管理列表
+│           ├── admin_student_form.html # 添加/编辑学员
+│           ├── admin_course_booking_list.html  # 课程预约列表
+│           ├── admin_course_booking_form.html  # 新增课程预约
+│           └── admin_course_booking_edit.html  # 课程预约管理
+│
+├── .trae/                        # Trae AI 配置和文档
+│   ├── docs/                     # 项目文档
+│   │   ├── stadium-booking-project.md  # 项目说明文档
+│   │   ├── database-schema.md    # 数据库结构文档
+│   │   └── issues/               # 问题记录和解决方案
+│   │       └── admin-permission-fix.md
+│   └── skills/                   # Trae AI 技能定义
+│       ├── stadium-booking-context/
+│       └── database-modification/
+│
+└── assets/                       # 静态资源
+    ├── book_court.png            # 预约界面截图
+    ├── create_user.png           # 创建用户截图
+    ├── login.png                 # 登录界面截图
+    └── configuration_server.md   # 服务器配置说明
 
 ```
 
@@ -133,19 +179,48 @@ StaduimBookingSystem/
 | created_at | DateTimeField | 创建时间 |
 | updated_at | DateTimeField | 更新时间 |
 
-### 3. Court (场地)
+### 3. CourtType (场地类型)
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | id | BigAutoField | 主键 |
-| name | CharField(100) | 场地名称 |
-| description | TextField | 场地描述 |
+| name | CharField(50) | 场地类型名称 (唯一) |
+| is_default | BooleanField | 是否为系统默认类型 |
 | created_at | DateTimeField | 创建时间 |
 | updated_at | DateTimeField | 更新时间 |
 
-**外键关系**：一个场地有多个预约 (`court.bookings`)，一个场地有多个可用时间段 (`court.availabilities`)
+**场地类型示例**：
+- 羽毛球场
+- 篮球场
+- 网球场
+- 乒乓球场
 
-### 4. CourtAvailability (可用时间段)
+**系统默认类型**：
+- 迁移文件 `0007_add_default_court_types.py` 会自动创建默认场地类型
+- `is_default=True` 标记系统默认类型，不可删除
+
+### 4. Court (场地)
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | BigAutoField | 主键 |
+| court_type | ForeignKey | 场地类型 (可为空) |
+| name | CharField(100) | 场地名称 |
+| court_number | CharField(20) | 场地编号 (可为空) |
+| description | TextField | 场地描述 (可为空) |
+| created_at | DateTimeField | 创建时间 |
+| updated_at | DateTimeField | 更新时间 |
+
+**外键关系**：
+- 一个场地类型有多个场地 (`court_type.courts`)
+- 一个场地有多个预约 (`court.bookings`)
+- 一个场地有多个可用时间段 (`court.availabilities`)
+
+**字符串表示**：
+- 如果有场地类型和编号：显示为 "场地类型 - 编号"
+- 否则：显示场地名称
+
+### 5. CourtAvailability (可用时间段)
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
@@ -160,7 +235,7 @@ StaduimBookingSystem/
 
 **关键方法**：`is_date_available(date)` - 检查指定日期是否在可用范围内
 
-### 5. Booking (统一预约)
+### 6. Booking (统一预约)
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
@@ -171,8 +246,8 @@ StaduimBookingSystem/
 | date | DateField | 预约日期 |
 | start_time | TimeField | 开始时间 |
 | end_time | TimeField | 结束时间 |
-| booker_name | CharField(100) | 预约人姓名 |
-| booker_phone | CharField(20) | 预约人联系方式 |
+| booker_name | CharField(100) | 预约人姓名 (可为空) |
+| booker_phone | CharField(20) | 预约人联系方式 (可为空) |
 | status | CharField | 状态 (active/cancelled) |
 | created_at | DateTimeField | 创建时间 |
 | updated_at | DateTimeField | 更新时间 |
@@ -183,7 +258,7 @@ StaduimBookingSystem/
 - `get_student_count()` - 获取学员人数
 - `get_total_class_hours()` - 获取总课时数
 
-### 6. BookingStudent (预约学员关联)
+### 7. BookingStudent (预约学员关联)
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
@@ -194,6 +269,30 @@ StaduimBookingSystem/
 | created_at | DateTimeField | 创建时间 |
 
 **唯一约束**：`unique_together: ['booking', 'student']`
+
+---
+
+## 数据模型关系图
+
+```
+User (Django内置)
+  │
+  ├── 1:1 ── Profile (用户类型)
+  │
+  └── 1:N ── Booking (预约记录)
+
+CourtType (场地类型)
+  │
+  └── 1:N ── Court (场地)
+              │
+              ├── 1:N ── CourtAvailability (可用时间段)
+              │
+              └── 1:N ── Booking (预约记录)
+                            │
+                            └── 1:N ── BookingStudent (预约学员)
+                                        │
+                                        └── N:1 ── Student (学员)
+```
 
 ---
 
@@ -210,6 +309,10 @@ StaduimBookingSystem/
 | `/cancel-booking/<id>/` | `cancel_booking` | GET | 取消预约 |
 | `/manage/` | `admin_dashboard` | GET | 管理后台首页 |
 | `/manage/statistics/` | `admin_statistics` | GET | 数据统计页面 |
+| `/manage/court-types/` | `admin_court_type_list` | GET | 场地类型管理列表 |
+| `/manage/court-types/add/` | `admin_court_type_add` | GET/POST | 添加场地类型 |
+| `/manage/court-types/edit/<id>/` | `admin_court_type_edit` | GET/POST | 编辑场地类型 |
+| `/manage/court-types/delete/<id>/` | `admin_court_type_delete` | GET | 删除场地类型 |
 | `/manage/courts/` | `admin_court_list` | GET | 场地管理列表 |
 | `/manage/courts/add/` | `admin_court_add` | GET/POST | 添加场地 |
 | `/manage/courts/edit/<id>/` | `admin_court_edit` | GET/POST | 编辑场地 |
@@ -238,6 +341,7 @@ StaduimBookingSystem/
 
 **请求参数**：
 - `date` (必需): 查询日期，格式 YYYY-MM-DD
+- `court_id` (可选): 指定场地ID
 
 **响应**：
 ```json
@@ -245,7 +349,9 @@ StaduimBookingSystem/
   "courts": [
     {
       "id": 1,
-      "name": "1号场地",
+      "name": "羽毛球场A",
+      "court_number": "1",
+      "court_type_name": "羽毛球场",
       "description": "...",
       "is_available": true,
       "start_time": "08:00",
@@ -283,7 +389,8 @@ StaduimBookingSystem/
         }
       ]
     }
-  ]
+  ],
+  "server_time": "2026-05-30 14:30:00"
 }
 ```
 
@@ -295,7 +402,7 @@ StaduimBookingSystem/
 ```json
 {
   "court_id": 1,
-  "date": "2026-04-15",
+  "date": "2026-05-30",
   "start_time": "09:00",
   "end_time": "10:00",
   "booker_name": "张三",
@@ -423,10 +530,13 @@ def login_view(request):
 base.html (基础模板，含响应式CSS)
 ├── login.html
 ├── court_list.html     (矩阵式预约界面)
+├── booking_form.html
 ├── my_bookings.html
 └── admin_*.html         (管理后台)
     ├── admin_dashboard.html
     ├── admin_statistics.html
+    ├── admin_court_type_list.html
+    ├── admin_court_type_form.html
     ├── admin_court_list.html
     ├── admin_court_form.html
     ├── admin_availability_list.html
@@ -442,6 +552,19 @@ base.html (基础模板，含响应式CSS)
 ```
 
 所有子页面通过 `{% extends 'booking/base.html' %}` 继承基础模板。
+
+---
+
+## 可复用组件
+
+项目使用模板包含 (includes) 来实现组件复用：
+
+| 组件文件 | 用途 | 使用示例 |
+|---------|------|---------|
+| `page_header.html` | 页面标题和描述 | `{% include 'booking/includes/page_header.html' %}` |
+| `stat_card.html` | 统计数据卡片 | 用于仪表盘统计展示 |
+| `data_table.html` | 数据表格 | 用于列表数据展示 |
+| `empty_state.html` | 空状态提示 | 无数据时的友好提示 |
 
 ---
 
@@ -479,6 +602,48 @@ base.html (基础模板，含响应式CSS)
 - 会话数据存储在内存缓存中
 - 服务器重启后会话丢失，用户需重新登录
 - 配置在 `stadium_booking/settings.py` 中
+- Session engine: `django.contrib.sessions.backends.cache`
+
+---
+
+## 测试
+
+### 测试文件
+
+- **位置**: `booking/tests.py`
+- **测试数量**: 32 个测试
+- **测试类**:
+  - `ModelTests` - 数据模型测试 (6个)
+  - `AuthenticationTests` - 用户认证测试 (5个)
+  - `CourtListTests` - 场地预约页面测试 (6个)
+  - `AdminTests` - 管理后台测试 (13个)
+  - `PermissionTests` - 权限测试 (2个)
+
+### 运行测试
+
+```bash
+# 运行所有测试
+python manage.py test booking.tests
+
+# 运行特定测试类
+python manage.py test booking.tests.ModelTests
+
+# 运行特定测试方法
+python manage.py test booking.tests.ModelTests.test_booking_creation
+
+# 详细输出
+python manage.py test booking.tests --verbosity=2
+
+# 保持测试数据库
+python manage.py test booking.tests --keepdb
+```
+
+### 测试数据模式
+
+- 使用 `get_or_create` 创建共享数据（如 CourtType）
+- 每个测试类独立的 `setUp` 方法
+- 使用 Django 测试客户端 (`Client`)
+- 测试数据库使用内存数据库 (`:memory:`)
 
 ---
 
@@ -497,11 +662,23 @@ python manage.py makemigrations
 # 执行数据库迁移
 python manage.py migrate
 
+# 查看迁移状态
+python manage.py showmigrations
+
 # 创建用户 (运行GUI工具)
 python create_user.py
 
+# 创建用户 (CLI版本)
+python create_user_cli.py
+
 # 进入Django shell
 python manage.py shell
+
+# 收集静态文件
+python manage.py collectstatic
+
+# 检查项目配置
+python manage.py check
 ```
 
 ---
@@ -512,15 +689,57 @@ python manage.py shell
 
 ---
 
+## 数据库迁移历史
+
+| 迁移文件 | 说明 |
+|---------|------|
+| `0001_initial.py` | 初始化数据库结构 |
+| `0002_profile.py` | 添加用户类型模型 |
+| `0003_student_coursebooking_coursebookingstudent.py` | 添加学员和课程预约 |
+| `0004_booking_booker_name_booking_booker_phone.py` | 添加预约人信息字段 |
+| `0005_remove_coursebookingstudent_booking_and_more.py` | 统一预约模型 |
+| `0006_add_court_type.py` | 添加场地类型模型 |
+| `0007_add_default_court_types.py` | 添加默认场地类型数据 |
+
+---
+
 ## 注意事项
 
 1. **用户类型**：使用 `Profile.user_type` 字段控制管理员/普通用户权限
-2. **预约时间规则**：开始和结束时间必须是整点或半点 (如 09:00, 09:30, 10:00)
-3. **数据库变更**：修改 `models.py` 后需要执行 `makemigrations` 和 `migrate`
-4. **AJAX请求**：前端使用原生JavaScript，无额外框架依赖
-5. **Profile自动创建**：新用户通过 `create_user.py` 创建时会自动创建 Profile 记录
-6. **统一预约模型**：Booking模型通过booking_type区分场地预约和课程预约
-7. **冲突检测**：场地预约和课程预约共享冲突检测逻辑
-8. **响应式设计**：系统支持手机端访问，界面自动适配
-9. **会话存储**：服务器重启后需重新登录
-10. **URL路由**：自定义管理后台使用 `/manage/` 前缀，避免与Django Admin冲突
+2. **场地类型**：CourtType 的 name 字段唯一，不可重复
+3. **场地信息**：Court 的 court_type 和 court_number 可为空，description 可为空
+4. **预约时间规则**：开始和结束时间必须是整点或半点 (如 09:00, 09:30, 10:00)
+5. **数据库变更**：修改 `models.py` 后需要执行 `makemigrations` 和 `migrate`
+6. **AJAX请求**：前端使用原生JavaScript，无额外框架依赖
+7. **Profile自动创建**：新用户通过 `create_user.py` 创建时会自动创建 Profile 记录
+8. **统一预约模型**：Booking模型通过booking_type区分场地预约和课程预约
+9. **冲突检测**：场地预约和课程预约共享冲突检测逻辑
+10. **URL冲突避免**：自定义管理页面使用 `/manage/` 路径，避免与 Django Admin `/admin/` 冲突
+
+---
+
+## 开发建议
+
+### 添加新功能
+
+1. 在 `models.py` 中定义数据模型
+2. 创建并应用迁移：`python manage.py makemigrations` 和 `python manage.py migrate`
+3. 在 `views.py` 中实现业务逻辑
+4. 在 `urls.py` 中添加路由
+5. 在 `templates/booking/` 中创建模板
+6. 在 `tests.py` 中添加测试
+7. 更新文档
+
+### 修改现有功能
+
+1. 理解现有代码结构
+2. 修改相关文件
+3. 运行测试确保不破坏现有功能
+4. 更新文档
+
+### 代码风格
+
+- 遵循 PEP 8 规范
+- 使用有意义的变量名和函数名
+- 添加必要的注释
+- 保持函数简洁，单一职责
