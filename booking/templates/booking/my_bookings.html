@@ -3,9 +3,14 @@
 {% block title %}我的预约 - 体育场馆预约系统{% endblock %}
 
 {% block content %}
-    <div class="card">
-        <h2>我的预约</h2>
-        {% if bookings %}
+{% include 'booking/includes/page_header.html' with title="我的预约" back_url="/" back_text="返回首页" %}
+
+<div class="card">
+    <div class="table-header">
+        <h2>预约列表</h2>
+    </div>
+    {% if bookings %}
+        <div class="table-wrapper">
             <table>
                 <thead>
                     <tr>
@@ -30,14 +35,15 @@
                             <td>{{ booking.booker_phone }}</td>
                             <td>{{ booking.get_status_display }}</td>
                             <td>
-                                <a href="{% url 'cancel_booking' booking.id %}" class="btn btn-danger" onclick="return confirm('确定要取消这个预约吗？')">取消</a>
+                                <a href="{% url 'cancel_booking' booking.id %}" class="btn btn-sm btn-danger" onclick="return confirm('确定要取消这个预约吗？')">取消</a>
                             </td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
-        {% else %}
-            <p>您还没有任何预约。</p>
-        {% endif %}
-    </div>
+        </div>
+    {% else %}
+        {% include 'booking/includes/empty_state.html' with icon="📋" title="暂无预约" message="您还没有任何预约，快去预约场地吧" %}
+    {% endif %}
+</div>
 {% endblock %}
